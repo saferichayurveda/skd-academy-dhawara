@@ -30,10 +30,10 @@
 
     <section id="adminPanel" class="hidden">
       <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2 id="uploadHeading">फोटो / वीडियो अपलोड करें</h2><button id="logoutBtn" class="btn secondary" type="button" id="logoutBtn" class="btn secondary" type="button">Logout</button></div>
+        <div class="row" style="justify-content:space-between"><h2 id="uploadHeading">फोटो / वीडियो अपलोड करें</h2><button id="logoutBtn" class="btn secondary" type="button">Logout</button></div>
         <form id="uploadForm">
           <label for="title" id="titleLabel">शीर्षक (वैकल्पिक)</label>
-          <input id="title" type="text" maxlength="120" placeholder="जैसे: वार्षिकोत्सव 2026" id="titleInput">
+          <input id="title" type="text" maxlength="120" placeholder="जैसे: वार्षिकोत्सव 2026">
           <label for="files" id="filesLabel">मोबाइल Gallery से फोटो या वीडियो चुनें</label>
           <input id="files" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple required>
           <p class="note" id="uploadNote">प्रत्येक फाइल अधिकतम 50 MB। फोटो: JPG, PNG, WEBP, GIF, AVIF। वीडियो: MP4, WEBM या MOV। अपलोड के लिए इंटरनेट चालू रखें।</p>
@@ -41,7 +41,7 @@
         </form>
       </div>
       <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2 id="mediaHeading">प्रकाशित मीडिया</h2><button id="refreshBtn" class="btn secondary" type="button" id="refreshBtn" class="btn secondary" type="button">Refresh</button></div>
+        <div class="row" style="justify-content:space-between"><h2 id="mediaHeading">प्रकाशित मीडिया</h2><button id="refreshBtn" class="btn secondary" type="button">Refresh</button></div>
         <div id="mediaGrid" class="grid"></div>
       </div>
     </section>
