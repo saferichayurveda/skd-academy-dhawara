@@ -75,11 +75,11 @@ function setPageLanguage(language) {
   document.querySelector(".admission-panel h3").textContent = langValue(translations.admissionTitle);
   document.querySelector(".admission-panel p").textContent = langValue(translations.admissionText);
   setTextAll(".admission-panel li", translations.admissionList);
-  document.querySelector(".admission-panel .btn").textContent = langValue(translations.contactDetails).split("||")[0];
+  document.querySelector(".admission-panel .btn").textContent = langValue(translations.admissionButton);
   const notice = document.querySelector(".notice-empty h3");
-  if (notice) notice.textContent = langValue(translations.contactDetails).split("||")[1] || (currentLanguage === "en" ? "Important notices will be available here soon" : "जल्द ही महत्वपूर्ण सूचनाएँ यहाँ उपलब्ध होंगी");
+  if (notice) notice.textContent = langValue(translations.noticeTitle);
   const noticeP = document.querySelector(".notice-empty p");
-  if (noticeP) noticeP.textContent = currentLanguage === "en" ? "Fee updates, holidays, exam schedules, and parent meeting notices will be posted here." : "फीस, छुट्टियों, परीक्षा कार्यक्रम और अभिभावक बैठकों की सूचना इस स्थान पर जोड़ी जाएगी।";
+  if (noticeP) noticeP.textContent = langValue(translations.noticeText);
   const galleryAdmin = document.querySelector(".gallery-admin-link span");
   if (galleryAdmin) galleryAdmin.textContent = langValue(translations.galleryAdmin);
   const contactP = document.querySelector(".contact-panel > div > p");
