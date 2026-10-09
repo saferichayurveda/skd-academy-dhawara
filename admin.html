@@ -8,44 +8,44 @@
   <title>Admin Media Panel | S. K. D. Academy</title>
   <style>
     *{box-sizing:border-box}body{margin:0;background:#f3f7fc;color:#17243a;font-family:Arial,sans-serif;line-height:1.55}.wrap{max-width:850px;margin:0 auto;padding:22px 14px 50px}.top{display:flex;align-items:center;gap:12px;margin-bottom:18px}.logo{width:54px;height:54px;object-fit:contain;background:white;border-radius:50%}h1{font-size:23px;margin:0;color:#12366a}.sub{margin:2px 0;color:#637083;font-size:14px}.panel{background:white;border:1px solid #dfe7f1;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 4px 18px #0c28500b}h2{font-size:19px;color:#12366a;margin:0 0 12px}label{display:block;font-weight:bold;margin:12px 0 6px}input[type=password],input[type=text],input[type=file]{display:block;width:100%;padding:12px;border:1px solid #cbd6e5;border-radius:9px;background:white;font-size:16px}input[type=file]{padding:10px}.btn{border:0;border-radius:9px;padding:12px 16px;font-weight:bold;font-size:15px;cursor:pointer;background:#12366a;color:white}.btn.secondary{background:#e8eef7;color:#12366a}.btn.danger{background:#a52b2b}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row .btn{margin-top:12px}.note{font-size:13px;color:#637083}.status{padding:10px;border-radius:8px;background:#f3f7fc;margin:12px 0;white-space:pre-wrap}.status.error{background:#fff0f0;color:#9b1c1c}.status.success{background:#e9f8ee;color:#176a35}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.item{border:1px solid #dfe7f1;border-radius:12px;overflow:hidden;background:white;min-width:0}.preview{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#e8eef7}.item-info{padding:10px}.item-title{font-weight:bold;overflow-wrap:anywhere}.item-meta{font-size:12px;color:#637083;margin:4px 0 10px}.item .btn{padding:9px 11px;font-size:13px}.header-actions{margin-left:auto}.back{color:#12366a;text-decoration:none;font-weight:bold}@media(max-width:480px){.panel{padding:15px}.top{align-items:flex-start}.header-actions{margin-left:0;width:100%}.header-actions .btn{width:100%}}
-  </style>
+  .language-switch{display:flex;gap:5px;margin-left:auto}.language-switch button{border:1px solid #cbd6e5;background:white;color:#12366a;border-radius:7px;padding:7px 9px;font-weight:bold}.language-switch button[aria-pressed="true"]{background:#12366a;color:white}@media(max-width:480px){.top{flex-wrap:wrap}.language-switch{margin-left:0;width:100%}}\n  </style>
 </head>
 <body>
   <div class="wrap">
     <header class="top">
       <img src="logo.jpg" class="logo" alt="विद्यालय का लोगो">
-      <div><h1>S. K. D. Academy, Dhawara</h1><p class="sub">सुरक्षित फोटो एवं वीडियो Admin Panel</p></div>
+      <div><h1>S. K. D. Academy, Dhawara</h1><p class="sub" id="adminSubtitle">सुरक्षित फोटो एवं वीडियो Admin Panel</p></div><div class="language-switch" role="group" aria-label="Choose language / भाषा चुनें"><button type="button" data-admin-lang="hi" aria-pressed="true">हिंदी</button><button type="button" data-admin-lang="en" aria-pressed="false">English</button></div>
     </header>
     <div id="status" class="status" role="status">कनेक्शन जाँचा जा रहा है…</div>
 
     <section id="loginPanel" class="panel hidden">
-      <h2>Admin Login</h2>
-      <p class="note">यह पेज केवल अधिकृत व्यवस्थापक के लिए है। अपना पासवर्ड किसी से साझा न करें।</p>
+      <h2 id="loginHeading">Admin Login</h2>
+      <p class="note" id="loginNote">यह पेज केवल अधिकृत व्यवस्थापक के लिए है। अपना पासवर्ड किसी से साझा न करें।</p>
       <form id="loginForm">
-        <label for="password">Admin पासवर्ड</label>
+        <label for="password" id="passwordLabel">Admin पासवर्ड</label>
         <input id="password" type="password" autocomplete="current-password" required>
-        <div class="row"><button class="btn" type="submit">सुरक्षित Login</button><a class="back" href="/">← वेबसाइट पर जाएँ</a></div>
+        <div class="row"><button class="btn" type="submit" id="loginButton">सुरक्षित Login</button><a class="back" id="backLink" href="/">← वेबसाइट पर जाएँ</a></div>
       </form>
     </section>
 
     <section id="adminPanel" class="hidden">
       <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2>फोटो / वीडियो अपलोड करें</h2><button id="logoutBtn" class="btn secondary" type="button">Logout</button></div>
+        <div class="row" style="justify-content:space-between"><h2 id="uploadHeading">फोटो / वीडियो अपलोड करें</h2><button id="logoutBtn" class="btn secondary" type="button" id="logoutBtn" class="btn secondary" type="button">Logout</button></div>
         <form id="uploadForm">
-          <label for="title">शीर्षक (वैकल्पिक)</label>
-          <input id="title" type="text" maxlength="120" placeholder="जैसे: वार्षिकोत्सव 2026">
-          <label for="files">मोबाइल Gallery से फोटो या वीडियो चुनें</label>
+          <label for="title" id="titleLabel">शीर्षक (वैकल्पिक)</label>
+          <input id="title" type="text" maxlength="120" placeholder="जैसे: वार्षिकोत्सव 2026" id="titleInput">
+          <label for="files" id="filesLabel">मोबाइल Gallery से फोटो या वीडियो चुनें</label>
           <input id="files" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple required>
-          <p class="note">प्रत्येक फाइल अधिकतम 50 MB। फोटो: JPG, PNG, WEBP, GIF, AVIF। वीडियो: MP4, WEBM या MOV। अपलोड के लिए इंटरनेट चालू रखें।</p>
+          <p class="note" id="uploadNote">प्रत्येक फाइल अधिकतम 50 MB। फोटो: JPG, PNG, WEBP, GIF, AVIF। वीडियो: MP4, WEBM या MOV। अपलोड के लिए इंटरनेट चालू रखें।</p>
           <button id="uploadBtn" class="btn" type="submit">चुनी गई फाइलें अपलोड करें</button>
         </form>
       </div>
       <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2>प्रकाशित मीडिया</h2><button id="refreshBtn" class="btn secondary" type="button">Refresh</button></div>
+        <div class="row" style="justify-content:space-between"><h2 id="mediaHeading">प्रकाशित मीडिया</h2><button id="refreshBtn" class="btn secondary" type="button" id="refreshBtn" class="btn secondary" type="button">Refresh</button></div>
         <div id="mediaGrid" class="grid"></div>
       </div>
     </section>
-    <p class="note"><a class="back" href="/">← मुख्य वेबसाइट</a></p>
+    <p class="note"><a class="back" id="footerBackLink" href="/">← मुख्य वेबसाइट</a></p>
   </div>
   <script src="admin.js"></script>
 </body>
