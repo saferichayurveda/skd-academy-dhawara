@@ -7,6 +7,12 @@
   <meta name="description" content="S. K. D. Academy, Dhawara, Kushinagar, Uttar Pradesh. विद्यालय की जानकारी, प्रवेश, नोटिस और संपर्क।">
   <title>S. K. D. Academy, Dhawara | Official Website</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .language-switch{display:flex;align-items:center;gap:4px;white-space:nowrap}
+    .language-switch button{border:1px solid #cbd6e5;background:#fff;color:#12366a;border-radius:7px;padding:7px 9px;font-weight:bold;cursor:pointer;font-size:12px}
+    .language-switch button[aria-pressed="true"]{background:#12366a;color:#fff;border-color:#12366a}
+    @media(max-width:850px){.language-switch{margin-left:auto}.site-header{gap:8px}}
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -14,6 +20,10 @@
       <img src="logo.jpg" alt="S. K. D. Academy logo" class="logo">
       <span><strong>S. K. D. Academy, Dhawara</strong><small>Recognised School · Classes 1–10</small></span>
     </a>
+    <div class="language-switch" role="group" aria-label="Choose language / भाषा चुनें">
+      <button type="button" data-lang-choice="hi" aria-pressed="true">हिंदी</button>
+      <button type="button" data-lang-choice="en" aria-pressed="false">English</button>
+    </div>
     <button class="menu-toggle" id="menuToggle" aria-label="मेनू खोलें" aria-expanded="false">☰</button>
     <nav id="mainNav" class="nav">
       <a href="#home">होम</a><a href="#about">विद्यालय परिचय</a><a href="#classes">कक्षाएँ</a><a href="#admission">प्रवेश</a><a href="#notices">नोटिस बोर्ड</a><a href="#gallery">फोटो/वीडियो</a><a href="#contact">संपर्क</a>
