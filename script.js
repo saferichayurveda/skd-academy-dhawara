@@ -94,7 +94,10 @@ function setPageLanguage(language) {
   const menuButton = document.getElementById("menuToggle");
   if (menuButton) menuButton.setAttribute("aria-label", menuButton.getAttribute("aria-expanded") === "true" ? (currentLanguage === "en" ? "Close menu" : "मेनू बंद करें") : (currentLanguage === "en" ? "Open menu" : "मेनू खोलें"));
   const grid = document.getElementById("publicMediaGrid");
-  if (grid && grid.querySelector(".gallery-message")) {\n    const messageKey = galleryMessageType === "empty" ? "galleryEmpty" : galleryMessageType === "error" ? "galleryError" : "galleryLoading";\n    grid.querySelector(".gallery-message").textContent = langValue(translations[messageKey]);\n  }
+  if (grid && grid.querySelector(".gallery-message")) {
+    const messageKey = galleryMessageType === "empty" ? "galleryEmpty" : galleryMessageType === "error" ? "galleryError" : "galleryLoading";
+    grid.querySelector(".gallery-message").textContent = langValue(translations[messageKey]);
+  }
   try { localStorage.setItem("skd-language", currentLanguage); } catch {}
 }
 document.querySelectorAll("[data-lang-choice]").forEach((button) => button.addEventListener("click", () => setPageLanguage(button.dataset.langChoice)));
