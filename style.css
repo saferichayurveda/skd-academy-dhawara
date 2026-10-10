@@ -7,3 +7,8 @@ body{margin:0;font-family:Arial,sans-serif;color:#17243a;line-height:1.6}*{box-s
 .gallery-message{grid-column:1/-1;text-align:center;color:#637083;padding:24px}
 .gallery-admin-link{text-align:center;margin:24px 0 0;font-size:13px;color:#637083}
 .gallery-admin-link a{color:#12366a;font-weight:bold}
+
+/* School contact actions */
+.contact-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.contact-actions .btn{margin:0;font-size:14px}
+@media(max-width:480px){.contact-actions{display:grid;grid-template-columns:1fr}.contact-actions .btn{text-align:center}}
