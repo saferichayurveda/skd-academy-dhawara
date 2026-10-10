@@ -28,17 +28,20 @@ const translations = {
   "quickSmall": [["आवश्यक जानकारी","विद्यालय की सूचनाएँ","कक्षावार जानकारी","पता और सहायता"],["Admission information","School updates","Class-wise information","Address and help"]],
   "sectionEyebrows": [["हमारे विद्यालय के बारे में","शैक्षिक जानकारी","नए विद्यार्थियों के लिए","अभिभावकों के लिए","विद्यालय की गतिविधियाँ","हमसे जुड़ें"],["About Our School","Academic Information","For New Students","For Parents","School Activities","Get in Touch"]],
   "sectionTitles": [["शिक्षा और विकास की ओर एक कदम","कक्षा 1 से 10 तक","प्रवेश प्रक्रिया","नोटिस बोर्ड","फोटो एवं वीडियो गैलरी","संपर्क एवं पता"],["A Step Towards Education and Growth","Classes 1 to 10","Admission Process","Notice Board","Photo & Video Gallery","Contact & Address"]],
-  "sectionTexts": [["विद्यालय से संबंधित प्रमाणित जानकारी यहाँ साझा की जाएगी।","कक्षावार पाठ्यक्रम, समय-सारणी और अन्य विवरण विद्यालय द्वारा उपलब्ध होने पर जोड़े जाएँगे।","प्रवेश संबंधी अंतिम नियम और दस्तावेज विद्यालय कार्यालय से सत्यापित कराएँ।","नई सूचनाएँ विद्यालय से पुष्टि के बाद यहाँ प्रकाशित की जाएँगी।","विद्यालय के कार्यक्रमों, गतिविधियों और समारोहों की तस्वीरें एवं वीडियो यहाँ देखिए।"],["Verified information about the school will be shared here.","Class-wise curriculum, timetables, and other details will be added when provided by the school.","Please verify the final admission rules and required documents with the school office.","New notices will be published here after confirmation by the school.","View photos and videos of school events, activities, and celebrations here."]],
+  "sectionTexts": [["विद्यालय की शैक्षिक जानकारी, उद्देश्य और अभिभावकों के लिए उपयोगी विवरण यहाँ दिए गए हैं।","कक्षा 1 से 10 तक की कक्षाओं की जानकारी उपलब्ध है। कक्षा-विशेष विवरण के लिए विद्यालय से संपर्क करें।","प्रवेश, सीट उपलब्धता, शुल्क और आवश्यक दस्तावेजों की जानकारी विद्यालय कार्यालय से प्राप्त करें।","विद्यालय की नई सूचनाएँ यहाँ प्रकाशित की जाएँगी।","विद्यालय के कार्यक्रमों, गतिविधियों और समारोहों की तस्वीरें एवं वीडियो यहाँ देखिए।"],["Learn about the school, its educational aims, and useful information for parents.","Information is available for Classes 1 to 10. Contact the school for class-specific details.","Contact the school office for admissions, seat availability, fees, and required documents.","New school notices will be published here.","View photos and videos of school events, activities, and celebrations here."]],
   "aboutTitles": [["हमारा उद्देश्य","हमारा दृष्टिकोण","विद्यालय की जानकारी"],["Our Mission","Our Vision","School Information"]],
   "aboutTexts": [["विद्यार्थियों के शैक्षिक विकास, अनुशासन और सीखने के प्रति रुचि को प्रोत्साहित करना।","विद्यार्थियों और अभिभावकों के लिए स्पष्ट, उपयोगी और समय पर विद्यालयी जानकारी उपलब्ध कराना।","उत्तर प्रदेश में मान्यता प्राप्त विद्यालय; कक्षा 1 से 10 तक की पढ़ाई।"],["To encourage students’ academic growth, discipline, and interest in learning.","To provide clear, useful, and timely school information for students and parents.","A recognised school in Uttar Pradesh, offering education from Classes 1 to 10."]],
   "classNames": [["कक्षा 1","कक्षा 2","कक्षा 3","कक्षा 4","कक्षा 5","कक्षा 6","कक्षा 7","कक्षा 8","कक्षा 9","कक्षा 10"],["Class 1","Class 2","Class 3","Class 4","Class 5","Class 6","Class 7","Class 8","Class 9","Class 10"]],
   "admissionTitle": ["प्रवेश के लिए संपर्क करें","Contact Us for Admissions"],
   "admissionText": ["कक्षा, सीट उपलब्धता, शुल्क और आवश्यक दस्तावेजों की जानकारी के लिए विद्यालय से संपर्क करें।","Contact the school for information about classes, seat availability, fees, and required documents."],
   "admissionList": [["विद्यार्थी का नाम और जन्मतिथि","अभिभावक का संपर्क विवरण","पूर्व विद्यालय का विवरण, जहाँ लागू हो","आवश्यक प्रमाण-पत्रों की सूची कार्यालय से पुष्टि करें"],["Student’s name and date of birth","Parent/guardian contact details","Previous school details, where applicable","Confirm the required documents with the school office"]],
-  "contactDetails": [["संपर्क विवरण देखें","जल्द ही महत्वपूर्ण सूचनाएँ यहाँ उपलब्ध होंगी","फीस, छुट्टियों, परीक्षा कार्यक्रम और अभिभावक बैठकों की सूचना इस स्थान पर जोड़ी जाएगी。"],["View Contact Details","Important notices will be available here soon","Fee updates, holidays, exam schedules, and parent meeting notices will be posted here."]],
+  "admissionButton": ["संपर्क विवरण देखें","View Contact Details"],
+  "noticeTitle": ["अभी कोई नई सूचना प्रकाशित नहीं है","No new notices have been published yet"],
+  "noticeText": ["नई सूचना प्रकाशित होने पर यहाँ दिखाई जाएगी।","New notices will appear here when published."],
+  "contactActions": [["कॉल करें: 9956303252","WhatsApp: 9956303252","कॉल करें: 8317053930","WhatsApp: 8317053930"],["Call: 9956303252","WhatsApp: 9956303252","Call: 8317053930","WhatsApp: 8317053930"]],
   "galleryAdmin": ["· केवल अधिकृत व्यवस्थापक के लिए","· Authorised administrators only"],
   "contactAddress": ["धवारा, पोस्ट करीतिन, जनपद कुशीनगर, उत्तर प्रदेश, भारत","Dhawara, Post Karitin, Kushinagar District, Uttar Pradesh, India"],
-  "contactNote": ["विद्यालय का फोन नंबर और सटीक मानचित्र लोकेशन पुष्टि के बाद जोड़ी जाएगी।","The school phone number and exact map location will be added after confirmation."],
+  "contactNote": ["फोन या WhatsApp से विद्यालय से संपर्क करें।","Call or WhatsApp the school for assistance."],
   "mapButton": ["Google Maps पर खोजें ↗","Find us on Google Maps ↗"],
   "footerAddress": ["धवारा, जनपद कुशीनगर, उत्तर प्रदेश","Dhawara, Kushinagar District, Uttar Pradesh"],
   "galleryLoading": ["गैलरी लोड हो रही है…","Loading gallery…"],
@@ -87,7 +90,12 @@ function setPageLanguage(language) {
   if (contactP) contactP.textContent = langValue(translations.contactAddress);
   const contactNote = document.querySelector(".contact-panel .muted");
   if (contactNote) contactNote.textContent = langValue(translations.contactNote);
-  const mapButton = document.querySelector(".contact-panel .btn");
+  document.querySelectorAll("[data-contact-action]").forEach((node) => {
+    const labels = translations.contactActions[currentLanguage === "en" ? 1 : 0];
+    const index = Number(node.dataset.contactAction);
+    if (labels[index]) node.textContent = labels[index];
+  });
+  const mapButton = document.querySelector(".contact-panel > .btn");
   if (mapButton) mapButton.textContent = langValue(translations.mapButton);
   const footerAddress = document.querySelector("footer p");
   if (footerAddress) footerAddress.textContent = langValue(translations.footerAddress);
