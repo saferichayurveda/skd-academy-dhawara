@@ -106,42 +106,49 @@ async function loadPublicGallery() {
   const grid = document.getElementById("publicMediaGrid");
   if (!grid) return;
   try {
-    const response = await fetch("/api/media", { cache: "no-store" });
-    if (!response.ok) throw new Error("gallery unavailable");
-    const data = await response.json();
+    // Free gallery: list files from the public GitHub repository's media/ folder.
+    const response = await fetch("https://api.github.com/repos/saferichayurveda/skd-academy-dhawara/contents/media", {
+      headers: { Accept: "application/vnd.github+json" },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("media list unavailable");
+    const files = await response.json();
+    const allowed = /\.(jpe?g|png|webp|gif|avif|mp4|webm|mov)$/i;
+    const items = Array.isArray(files) ? files.filter((file) => file.type === "file" && allowed.test(file.name)) : [];
     grid.replaceChildren();
-    if (!Array.isArray(data.items) || data.items.length === 0) {
+    if (items.length === 0) {
+      galleryMessageType = "empty";
       const empty = document.createElement("p");
       empty.className = "gallery-message";
       empty.textContent = langValue(translations.galleryEmpty);
       grid.appendChild(empty);
       return;
     }
-    data.items.forEach((item) => {
+    galleryMessageType = "";
+    items.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    items.forEach((item) => {
       const figure = document.createElement("figure");
       figure.className = "public-media-card";
-      const url = "/api/media/" + encodeURIComponent(item.key);
-      let media;
-      if (item.type && item.type.startsWith("video/")) {
-        media = document.createElement("video");
+      const extension = item.name.split(".").pop().toLowerCase();
+      const isVideo = ["mp4", "webm", "mov"].includes(extension);
+      const media = document.createElement(isVideo ? "video" : "img");
+      if (isVideo) {
         media.controls = true;
         media.preload = "metadata";
         media.playsInline = true;
       } else {
-        media = document.createElement("img");
         media.loading = "lazy";
-        media.alt = item.title || (currentLanguage === "en" ? "School activity" : "विद्यालय की गतिविधि");
+        media.alt = item.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
       }
-      media.src = url;
+      media.src = "/media/" + encodeURIComponent(item.name);
       figure.appendChild(media);
-      if (item.title) {
-        const caption = document.createElement("figcaption");
-        caption.textContent = item.title;
-        figure.appendChild(caption);
-      }
+      const caption = document.createElement("figcaption");
+      caption.textContent = item.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
+      figure.appendChild(caption);
       grid.appendChild(figure);
     });
   } catch {
+    galleryMessageType = "error";
     grid.replaceChildren();
     const message = document.createElement("p");
     message.className = "gallery-message";
