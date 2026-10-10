@@ -5,48 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#12366a">
-  <title>Admin Media Panel | S. K. D. Academy</title>
+  <title>Gallery Manager | S. K. D. Academy</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#f3f7fc;color:#17243a;font-family:Arial,sans-serif;line-height:1.55}.wrap{max-width:850px;margin:0 auto;padding:22px 14px 50px}.top{display:flex;align-items:center;gap:12px;margin-bottom:18px}.logo{width:54px;height:54px;object-fit:contain;background:white;border-radius:50%}h1{font-size:23px;margin:0;color:#12366a}.sub{margin:2px 0;color:#637083;font-size:14px}.panel{background:white;border:1px solid #dfe7f1;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 4px 18px #0c28500b}h2{font-size:19px;color:#12366a;margin:0 0 12px}label{display:block;font-weight:bold;margin:12px 0 6px}input[type=password],input[type=text],input[type=file]{display:block;width:100%;padding:12px;border:1px solid #cbd6e5;border-radius:9px;background:white;font-size:16px}input[type=file]{padding:10px}.btn{border:0;border-radius:9px;padding:12px 16px;font-weight:bold;font-size:15px;cursor:pointer;background:#12366a;color:white}.btn.secondary{background:#e8eef7;color:#12366a}.btn.danger{background:#a52b2b}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row .btn{margin-top:12px}.note{font-size:13px;color:#637083}.status{padding:10px;border-radius:8px;background:#f3f7fc;margin:12px 0;white-space:pre-wrap}.status.error{background:#fff0f0;color:#9b1c1c}.status.success{background:#e9f8ee;color:#176a35}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.item{border:1px solid #dfe7f1;border-radius:12px;overflow:hidden;background:white;min-width:0}.preview{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#e8eef7}.item-info{padding:10px}.item-title{font-weight:bold;overflow-wrap:anywhere}.item-meta{font-size:12px;color:#637083;margin:4px 0 10px}.item .btn{padding:9px 11px;font-size:13px}.header-actions{margin-left:auto}.back{color:#12366a;text-decoration:none;font-weight:bold}@media(max-width:480px){.panel{padding:15px}.top{align-items:flex-start}.header-actions{margin-left:0;width:100%}.header-actions .btn{width:100%}}
-  .language-switch{display:flex;gap:5px;margin-left:auto}.language-switch button{border:1px solid #cbd6e5;background:white;color:#12366a;border-radius:7px;padding:7px 9px;font-weight:bold}.language-switch button[aria-pressed="true"]{background:#12366a;color:white}@media(max-width:480px){.top{flex-wrap:wrap}.language-switch{margin-left:0;width:100%}}\n  </style>
+    *{box-sizing:border-box}body{margin:0;background:#f3f7fc;color:#17243a;font-family:Arial,sans-serif;line-height:1.6}.wrap{max-width:760px;margin:0 auto;padding:22px 16px 50px}.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.logo{width:56px;height:56px;object-fit:contain;background:#fff;border-radius:50%}h1{font-size:22px;color:#12366a;margin:0}h2{font-size:19px;color:#12366a;margin-top:0}.sub{margin:2px 0;color:#637083;font-size:14px}.language{margin-left:auto;display:flex;gap:6px}.language button{border:1px solid #cbd6e5;border-radius:8px;background:white;color:#12366a;padding:8px 10px;font-weight:bold}.language button[aria-pressed=true]{background:#12366a;color:white}.panel{background:white;border:1px solid #dfe7f1;border-radius:15px;padding:20px;margin:18px 0;box-shadow:0 4px 18px #0c28500b}.btn{display:inline-block;background:#12366a;color:white;text-decoration:none;padding:12px 16px;border-radius:9px;font-weight:bold}.muted{color:#637083;font-size:14px}.warning{background:#fff7df;border-left:4px solid #d79a12;padding:12px;border-radius:7px}.steps li{margin:10px 0}.back{color:#12366a;font-weight:bold;text-decoration:none}@media(max-width:480px){.language{margin-left:0;width:100%}.language button{flex:1}}
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <img src="logo.jpg" class="logo" alt="विद्यालय का लोगो">
-      <div><h1>S. K. D. Academy, Dhawara</h1><p class="sub" id="adminSubtitle">सुरक्षित फोटो एवं वीडियो Admin Panel</p></div><div class="language-switch" role="group" aria-label="Choose language / भाषा चुनें"><button type="button" data-admin-lang="hi" aria-pressed="true">हिंदी</button><button type="button" data-admin-lang="en" aria-pressed="false">English</button></div>
-    </header>
-    <div id="status" class="status" role="status">कनेक्शन जाँचा जा रहा है…</div>
-
-    <section id="loginPanel" class="panel hidden">
-      <h2 id="loginHeading">Admin Login</h2>
-      <p class="note" id="loginNote">यह पेज केवल अधिकृत व्यवस्थापक के लिए है। अपना पासवर्ड किसी से साझा न करें।</p>
-      <form id="loginForm">
-        <label for="password" id="passwordLabel">Admin पासवर्ड</label>
-        <input id="password" type="password" autocomplete="current-password" required>
-        <div class="row"><button class="btn" type="submit" id="loginButton">सुरक्षित Login</button><a class="back" id="backLink" href="/">← वेबसाइट पर जाएँ</a></div>
-      </form>
-    </section>
-
-    <section id="adminPanel" class="hidden">
-      <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2 id="uploadHeading">फोटो / वीडियो अपलोड करें</h2><button id="logoutBtn" class="btn secondary" type="button">Logout</button></div>
-        <form id="uploadForm">
-          <label for="title" id="titleLabel">शीर्षक (वैकल्पिक)</label>
-          <input id="title" type="text" maxlength="120" placeholder="जैसे: वार्षिकोत्सव 2026">
-          <label for="files" id="filesLabel">मोबाइल Gallery से फोटो या वीडियो चुनें</label>
-          <input id="files" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple required>
-          <p class="note" id="uploadNote">प्रत्येक फाइल अधिकतम 50 MB। फोटो: JPG, PNG, WEBP, GIF, AVIF। वीडियो: MP4, WEBM या MOV। अपलोड के लिए इंटरनेट चालू रखें।</p>
-          <button id="uploadBtn" class="btn" type="submit">चुनी गई फाइलें अपलोड करें</button>
-        </form>
-      </div>
-      <div class="panel">
-        <div class="row" style="justify-content:space-between"><h2 id="mediaHeading">प्रकाशित मीडिया</h2><button id="refreshBtn" class="btn secondary" type="button">Refresh</button></div>
-        <div id="mediaGrid" class="grid"></div>
-      </div>
-    </section>
-    <p class="note"><a class="back" id="footerBackLink" href="/">← मुख्य वेबसाइट</a></p>
-  </div>
-  <script src="admin.js"></script>
+<div class="wrap">
+  <header class="top">
+    <img src="/logo.jpg" class="logo" alt="S. K. D. Academy logo">
+    <div><h1>S. K. D. Academy, Dhawara</h1><p class="sub" id="subtitle">फोटो एवं वीडियो गैलरी व्यवस्थापन</p></div>
+    <div class="language" aria-label="Choose language">
+      <button type="button" data-lang="hi" aria-pressed="true">हिंदी</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    </div>
+  </header>
+  <section class="panel">
+    <h2 id="heading">फोटो / वीडियो जोड़ें</h2>
+    <p id="intro">मुफ्त GitHub तरीके में मीडिया आपकी अधिकृत GitHub repository से जोड़ा जाएगा। अपलोड करने के लिए उसी GitHub खाते में साइन इन होना जरूरी है जिसके पास इस repository में बदलाव करने की अनुमति है।</p>
+    <p class="warning" id="warning">ध्यान दें: इस repository की फाइलें सार्वजनिक हैं। यहाँ जो फोटो/वीडियो जोड़े जाएँगे, वे वेबसाइट पर सभी लोग देख सकेंगे। केवल विद्यालय द्वारा प्रकाशित करने योग्य सामग्री जोड़ें।</p>
+    <a class="btn" id="upload" href="https://github.com/saferichayurveda/skd-academy-dhawara/upload/main/media">GitHub में फोटो / वीडियो जोड़ें ↗</a>
+    <h2 id="how" style="margin-top:24px">मोबाइल से कैसे जोड़ें?</h2>
+    <ol class="steps" id="steps">
+      <li>ऊपर दिए गए बटन को दबाएँ और GitHub में साइन इन करें।</li>
+      <li>फोन की Gallery से फोटो या वीडियो चुनें।</li>
+      <li>नीचे जाकर <b>Commit changes</b> दबाएँ।</li>
+      <li>Cloudflare वेबसाइट के अपडेट होने के लिए कुछ मिनट प्रतीक्षा करें।</li>
+    </ol>
+    <p class="muted" id="limit">बेहतर परिणाम के लिए छोटी फाइलें रखें (लगभग 20 MB से कम)। समर्थित प्रकार: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM, MOV।</p>
+  </section>
+  <p><a class="back" id="back" href="/">← मुख्य वेबसाइट पर वापस जाएँ</a></p>
+</div>
+<script>
+const words = {
+  hi: {
+    subtitle:"फोटो एवं वीडियो गैलरी व्यवस्थापन", heading:"फोटो / वीडियो जोड़ें",
+    intro:"मुफ्त GitHub तरीके में मीडिया आपकी अधिकृत GitHub repository से जोड़ा जाएगा। अपलोड करने के लिए उसी GitHub खाते में साइन इन होना जरूरी है जिसके पास इस repository में बदलाव करने की अनुमति है।",
+    warning:"ध्यान दें: इस repository की फाइलें सार्वजनिक हैं। यहाँ जो फोटो/वीडियो जोड़े जाएँगे, वे वेबसाइट पर सभी लोग देख सकेंगे। केवल विद्यालय द्वारा प्रकाशित करने योग्य सामग्री जोड़ें।",
+    upload:"GitHub में फोटो / वीडियो जोड़ें ↗", how:"मोबाइल से कैसे जोड़ें?",
+    steps:["ऊपर दिए गए बटन को दबाएँ और GitHub में साइन इन करें।","फोन की Gallery से फोटो या वीडियो चुनें।","नीचे जाकर Commit changes दबाएँ।","Cloudflare वेबसाइट के अपडेट होने के लिए कुछ मिनट प्रतीक्षा करें।"],
+    limit:"बेहतर परिणाम के लिए छोटी फाइलें रखें (लगभग 20 MB से कम)। समर्थित प्रकार: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM, MOV.",
+    back:"← मुख्य वेबसाइट पर वापस जाएँ"
+  },
+  en: {
+    subtitle:"Photo & Video Gallery Manager", heading:"Add Photos / Videos",
+    intro:"With the free GitHub method, media is added through your authorised GitHub repository. You must sign in to a GitHub account that has permission to edit this repository.",
+    warning:"Important: Files in this repository are public. Photos/videos added here will be visible to everyone on the website. Only upload media approved for public display by the school.",
+    upload:"Add Photos / Videos on GitHub ↗", how:"How to add from your phone",
+    steps:["Tap the button above and sign in to GitHub.","Choose photos or videos from your phone gallery.","Scroll down and tap Commit changes.","Wait a few minutes for the Cloudflare website to update."],
+    limit:"For best results, use small files (ideally under 20 MB). Supported types: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM, MOV.",
+    back:"← Back to main website"
+  }
+};
+function choose(lang){
+ const d=words[lang]||words.hi; document.documentElement.lang=lang;
+ document.querySelectorAll("[data-lang]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===lang)));
+ for(const id of ["subtitle","heading","intro","warning","upload","how","limit","back"]) document.getElementById(id).textContent=d[id];
+ const list=document.getElementById("steps"); list.replaceChildren();
+ d.steps.forEach(t=>{const li=document.createElement("li");li.textContent=t;list.appendChild(li);});
+ try{localStorage.setItem("skd-language",lang)}catch{}
+}
+document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>choose(b.dataset.lang)));
+let initial="hi";try{initial=localStorage.getItem("skd-language")==="en"?"en":"hi"}catch{}choose(initial);
+</script>
 </body>
 </html>
