@@ -39,7 +39,8 @@ const translations = {
   "noticeTitle": ["अभी कोई नई सूचना प्रकाशित नहीं है","No new notices have been published yet"],
   "noticeText": ["नई सूचना प्रकाशित होने पर यहाँ दिखाई जाएगी।","New notices will appear here when published."],
   "contactActions": [["कॉल करें: 9956303252","WhatsApp: 9956303252","कॉल करें: 8317053930","WhatsApp: 8317053930"],["Call: 9956303252","WhatsApp: 9956303252","Call: 8317053930","WhatsApp: 8317053930"]],
-  "galleryAdmin": ["· केवल अधिकृत व्यवस्थापक के लिए","· Authorised administrators only"],
+  "galleryAdminLink": ["फोटो/वीडियो प्रबंधन","Gallery Manager"],
+  "galleryAdmin": ["· मीडिया जोड़ने के लिए अधिकृत GitHub खाते की आवश्यकता है","· An authorised GitHub account is required to add media"],
   "contactAddress": ["धवारा, पोस्ट करीतिन, जनपद कुशीनगर, उत्तर प्रदेश, भारत","Dhawara, Post Karitin, Kushinagar District, Uttar Pradesh, India"],
   "contactNote": ["फोन या WhatsApp से विद्यालय से संपर्क करें।","Call or WhatsApp the school for assistance."],
   "mapButton": ["Google Maps पर खोजें ↗","Find us on Google Maps ↗"],
@@ -84,6 +85,8 @@ function setPageLanguage(language) {
   if (notice) notice.textContent = langValue(translations.noticeTitle);
   const noticeP = document.querySelector(".notice-empty p");
   if (noticeP) noticeP.textContent = langValue(translations.noticeText);
+  const galleryAdminLink = document.querySelector("[data-gallery-admin-link]");
+  if (galleryAdminLink) galleryAdminLink.textContent = langValue(translations.galleryAdminLink);
   const galleryAdmin = document.querySelector(".gallery-admin-link span");
   if (galleryAdmin) galleryAdmin.textContent = langValue(translations.galleryAdmin);
   const contactP = document.querySelector(".contact-panel > div > p");
