@@ -11,7 +11,7 @@ The school office module uses Cloudflare D1 so records are stored on the server 
 6. Deploy the site again, then open `/school-office.html` and sign in with the existing `ADMIN_PASSWORD` configured for the gallery admin. Do not put this password in GitHub or send it in chat.
 
 ## Module
-- Add/edit student profile by Admission No. (student name, father name, class, total fee).
+- Add/edit student profile by Admission No. (student name, father name, 10-digit mobile number, class, total fee).
 - Record each payment; receipt numbers are generated sequentially from the database ID as `SKD-0001`, `SKD-0002`, etc.
 - Print a single payment receipt from the browser's print dialog (choose Save as PDF to create a PDF).
 - Record staff attendance by date using P (Present), A (Absent), L (Leave); same staff/date can be corrected by saving again.
