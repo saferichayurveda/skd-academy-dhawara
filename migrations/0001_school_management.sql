@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS students (
   admission_no TEXT PRIMARY KEY,
   student_name TEXT NOT NULL,
   father_name TEXT NOT NULL DEFAULT '',
+  mobile_number TEXT NOT NULL CHECK(length(mobile_number) = 10),
   class_name TEXT NOT NULL DEFAULT '',
   total_fee INTEGER NOT NULL DEFAULT 0 CHECK(total_fee >= 0),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS payments (
   admission_no TEXT NOT NULL,
   student_name TEXT NOT NULL,
   father_name TEXT NOT NULL DEFAULT '',
+  mobile_number TEXT NOT NULL CHECK(length(mobile_number) = 10),
   class_name TEXT NOT NULL DEFAULT '',
   total_fee INTEGER NOT NULL DEFAULT 0,
   paid_fee INTEGER NOT NULL CHECK(paid_fee > 0),
