@@ -7,7 +7,7 @@ const rupees = (value) => Number.isFinite(Number(value)) ? Math.max(0, Math.roun
 async function loadData(db) {
   const [students, payments, attendance] = await Promise.all([
     db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.paid_fee),0) AS paidFee FROM students s LEFT JOIN payments p ON p.admission_no=s.admission_no GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
-    db.prepare("SELECT id, receipt_no AS receiptNo, admission_no AS admissionNo, student_name AS studentName, father_name AS fatherName, class_name AS className, total_fee AS totalFee, paid_fee AS paidFee, payment_date AS paymentDate, payment_mode AS paymentMode, remarks FROM payments ORDER BY id DESC LIMIT 1000").all(),
+    db.prepare("SELECT id, receipt_no AS receiptNo, admission_no AS admissionNo, student_name AS studentName, father_name AS fatherName, class_name AS className, total_fee AS totalFee, paid_fee AS paidFee, SUM(paid_fee) OVER (PARTITION BY admission_no ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulativePaidFee, payment_date AS paymentDate, payment_mode AS paymentMode, remarks FROM payments ORDER BY id DESC LIMIT 1000").all(),
     db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status, remarks FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all()
   ]);
   return { students: students.results || [], payments: payments.results || [], attendance: attendance.results || [] };
