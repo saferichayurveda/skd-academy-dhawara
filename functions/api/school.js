@@ -42,6 +42,17 @@ export async function onRequest({ request, env }) {
       return json({ ok: true }, 201);
     }
 
+    if (action === "delete_student") {
+      const admissionNo = clean(body.admissionNo, 40);
+      if (!admissionNo) return json({ error: "Admission No. सही नहीं है।" }, 400);
+      const student = await env.SCHOOL_DB.prepare("SELECT id FROM students WHERE admission_no=?").bind(admissionNo).first();
+      if (!student) return json({ error: "विद्यार्थी रिकॉर्ड नहीं मिला।" }, 404);
+      const payment = await env.SCHOOL_DB.prepare("SELECT id FROM payments WHERE student_id=? LIMIT 1").bind(student.id).first();
+      if (payment) return json({ error: "इस विद्यार्थी की फीस जमा होने का रिकॉर्ड है। हिसाब सुरक्षित रखने के लिए इसे हटाया नहीं जा सकता। पहले विद्यार्थी का रिकॉर्ड सुधारें।" }, 409);
+      await env.SCHOOL_DB.prepare("DELETE FROM students WHERE id=?").bind(student.id).run();
+      return json({ ok: true }, 200);
+    }
+
     if (action === "bulk_import_students") {
       if (!Array.isArray(body.students) || body.students.length < 1 || body.students.length > 500) {
         return json({ error: "एक बार में 1 से 500 विद्यार्थियों के रिकॉर्ड भेजें।" }, 400);
