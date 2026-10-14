@@ -8,7 +8,7 @@ async function loadData(db) {
   const [students, payments, attendance] = await Promise.all([
     db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.amount),0) AS paidFee FROM students s LEFT JOIN payments p ON p.student_id=s.id GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
     db.prepare("SELECT p.id, p.receipt_no AS receiptNo, s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, p.amount AS paidFee, SUM(p.amount) OVER (PARTITION BY p.student_id ORDER BY p.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulativePaidFee, p.payment_date AS paymentDate, p.payment_mode AS paymentMode, p.remarks FROM payments p JOIN students s ON s.id=p.student_id ORDER BY p.id DESC LIMIT 1000").all(),
-    db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status, remarks FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all()
+    db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all()
   ]);
   return { students: students.results || [], payments: payments.results || [], attendance: attendance.results || [] };
 }
@@ -66,8 +66,8 @@ export async function onRequest({ request, env }) {
       const status = clean(body.status, 1).toUpperCase();
       const remarks = clean(body.remarks, 300);
       if (!staffName || !/^\d{4}-\d{2}-\d{2}$/.test(attendanceDate) || !["P","A","L"].includes(status)) return json({ error: "शिक्षक का नाम, तारीख और P/A/L स्थिति सही भरें।" }, 400);
-      await env.SCHOOL_DB.prepare("INSERT INTO staff_attendance (staff_name, attendance_date, status, remarks) VALUES (?, ?, ?, ?) ON CONFLICT(staff_name, attendance_date) DO UPDATE SET status=excluded.status, remarks=excluded.remarks")
-        .bind(staffName, attendanceDate, status, remarks).run();
+      await env.SCHOOL_DB.prepare("INSERT INTO staff_attendance (staff_name, attendance_date, status) VALUES (?, ?, ?) ON CONFLICT(staff_name, attendance_date) DO UPDATE SET status=excluded.status")
+        .bind(staffName, attendanceDate, status).run();
       return json({ ok: true }, 201);
     }
 
