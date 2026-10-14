@@ -42,6 +42,32 @@ export async function onRequest({ request, env }) {
       return json({ ok: true }, 201);
     }
 
+    if (action === "bulk_import_students") {
+      if (!Array.isArray(body.students) || body.students.length < 1 || body.students.length > 500) {
+        return json({ error: "एक बार में 1 से 500 विद्यार्थियों के रिकॉर्ड भेजें।" }, 400);
+      }
+      const seen = new Set();
+      const rows = [];
+      for (let i = 0; i < body.students.length; i++) {
+        const item = body.students[i] || {};
+        const admissionNo = clean(item.admissionNo, 40);
+        const studentName = clean(item.studentName, 120);
+        const fatherName = clean(item.fatherName, 120);
+        const mobileNumber = clean(item.mobileNumber, 10);
+        const className = clean(item.className, 40);
+        const totalFee = rupees(item.totalFee);
+        if (!admissionNo || !studentName || !className || !/^[0-9]{10}$/.test(mobileNumber)) {
+          return json({ error: "CSV की पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Admission No., विद्यार्थी का नाम, Class या 10 अंकों का मोबाइल नंबर सही नहीं है। कोई रिकॉर्ड सेव नहीं किया गया।" }, 400);
+        }
+        if (seen.has(admissionNo)) return json({ error: "CSV में Admission No. " + admissionNo + " दो बार है। डुप्लीकेट हटाकर फिर अपलोड करें।" }, 400);
+        seen.add(admissionNo);
+        rows.push(env.SCHOOL_DB.prepare("INSERT INTO students (admission_no, student_name, father_name, mobile_number, class_name, total_fee) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name, father_name=excluded.father_name, mobile_number=excluded.mobile_number, class_name=excluded.class_name, total_fee=excluded.total_fee")
+          .bind(admissionNo, studentName, fatherName, mobileNumber, className, totalFee));
+      }
+      await env.SCHOOL_DB.batch(rows);
+      return json({ ok: true, imported: rows.length }, 201);
+    }
+
     if (action === "add_payment") {
       const admissionNo = clean(body.admissionNo, 40);
       const paidFee = rupees(body.paidFee);
