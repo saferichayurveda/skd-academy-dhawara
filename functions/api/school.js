@@ -19,7 +19,7 @@ export async function onRequest({ request, env }) {
 
   if (request.method === "GET") {
     try { return json(await loadData(env.SCHOOL_DB)); }
-    catch { return json({ error: "डेटा पढ़ने में समस्या हुई। D1 binding और tables जाँचें।" }, 500); }
+    catch (error) { console.error("School Office GET database error:", error); return json({ error: "डेटा पढ़ने में समस्या हुई।", detail: String(error?.message || error).slice(0, 240) }, 500); }
   }
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, { Allow: "GET, POST" });
   if (!originIsSame(request)) return json({ error: "अनुरोध अस्वीकार किया गया।" }, 403);
