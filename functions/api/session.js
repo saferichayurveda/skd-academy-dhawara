@@ -12,8 +12,13 @@ export async function onRequest({ request, env }) {
 
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, { Allow: "GET, POST, DELETE" });
   if (!originIsSame(request)) return json({ error: "अनुरोध अस्वीकार किया गया।" }, 403);
-  if (!env.ADMIN_PASSWORD || !env.SESSION_SECRET) {
-    return json({ error: "Admin login अभी configure नहीं हुआ है। Cloudflare में secrets सेट करें।" }, 503);
+  const missingSecrets = [];
+  if (!env.ADMIN_PASSWORD) missingSecrets.push("ADMIN_PASSWORD");
+  if (!env.SESSION_SECRET) missingSecrets.push("SESSION_SECRET");
+  if (missingSecrets.length) {
+    return json({
+      error: "Cloudflare Production environment में ये Secret उपलब्ध नहीं हैं: " + missingSecrets.join(", ") + ". Settings → Variables and secrets में इन्हें Production के लिए सेट करके नया deployment करें।"
+    }, 503);
   }
 
   let body;
