@@ -16,6 +16,11 @@ async function ensure(db) {
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`).run();
+  await db.prepare(`CREATE TABLE IF NOT EXISTS progress_cards (
+    admission_no TEXT NOT NULL, school_key TEXT NOT NULL, session TEXT NOT NULL,
+    payload_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (admission_no, school_key, session)
+  )`).run();
 }
 function b64(bytes) {
   let s = ""; for (const b of bytes) s += String.fromCharCode(b);
