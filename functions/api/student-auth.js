@@ -75,11 +75,15 @@ export async function onRequest({request,env}) {
     if(request.method==="GET") {
       const profileId=await currentProfile(request,env);
       if(!profileId)return json({authenticated:false},200);
+      const account=await env.SCHOOL_DB.prepare("SELECT must_change_pin FROM student_accounts WHERE profile_id=?").bind(profileId).first();
+      if(!account)return json({authenticated:false},200,{"Set-Cookie":COOKIE+"=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"});
+      // A temporary PIN may establish a session only to change that PIN; never return records first.
+      if(Number(account.must_change_pin)===1)return json({authenticated:true,mustChangePin:true});
       const profile=await env.SCHOOL_DB.prepare("SELECT profile_id,school_key,admission_no,student_name,father_name,mother_name,dob,class_name,pen,marks_json FROM student_profiles WHERE profile_id=?").bind(profileId).first();
       if(!profile)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404,{"Set-Cookie":COOKIE+"=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"});
       const result=await env.SCHOOL_DB.prepare("SELECT session,payload_json,updated_at FROM progress_cards WHERE admission_no=? AND school_key=? ORDER BY session DESC").bind("PROFILE:"+profileId,profile.school_key).all();
       let importedMarks={};try{importedMarks=JSON.parse(profile.marks_json||"{}")}catch{}
-      return json({authenticated:true,mustChangePin:(await env.SCHOOL_DB.prepare("SELECT must_change_pin FROM student_accounts WHERE profile_id=?").bind(profileId).first())?.must_change_pin===1,student:{studentName:profile.student_name,fatherName:profile.father_name,className:profile.class_name,dob:profile.dob,schoolKey:profile.school_key,marks:importedMarks},progressCards:(result.results||[]).map(r=>{let payload={};try{payload=JSON.parse(r.payload_json||"{}")}catch{}return {session:r.session,payload,updatedAt:r.updated_at}})});
+      return json({authenticated:true,mustChangePin:false,student:{studentName:profile.student_name,fatherName:profile.father_name,className:profile.class_name,dob:profile.dob,schoolKey:profile.school_key,marks:importedMarks},progressCards:(result.results||[]).map(r=>{let payload={};try{payload=JSON.parse(r.payload_json||"{}")}catch{}return {session:r.session,payload,updatedAt:r.updated_at}})});
     }
     if(request.method==="POST") {
       if(!originIsSame(request))return json({error:"अनुरोध अस्वीकार किया गया।"},403);
