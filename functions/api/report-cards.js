@@ -26,10 +26,19 @@ export async function onRequest({request, env}) {
     if (request.method !== "POST") return json({error:"Method not allowed"},405,{Allow:"GET, POST"});
     if (!originIsSame(request)) return json({error:"अनुरोध अस्वीकार किया गया।"},403);
     const body = await request.json();
-    const admissionNo=clean(body.admissionNo,40), schoolKey=clean(body.schoolKey,30), session=clean(body.session,20), payload=body.payload;
-    if (!admissionNo || !session || !["primary","l-madhyamik","u-madhyamik"].includes(schoolKey) || !payload || typeof payload!=="object") return json({error:"रिपोर्ट कार्ड का डेटा अधूरा है।"},400);
-    const student = await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=?").bind(admissionNo).first();
-    if (!student) return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला। पहले School Office में विद्यार्थी जोड़ें।"},404);
+    const profileId=clean(body.profileId,100), schoolKey=clean(body.schoolKey,30), session=clean(body.session,20), payload=body.payload;
+    let admissionNo=clean(body.admissionNo,140);
+    if(profileId){
+      if(!["primary","l-madhyamik","u-madhyamik"].includes(schoolKey))return json({error:"सही स्कूल चुनें।"},400);
+      const profile=await env.SCHOOL_DB.prepare("SELECT profile_id FROM student_profiles WHERE profile_id=? AND school_key=?").bind(profileId,schoolKey).first();
+      if(!profile)return json({error:"Student Import वाला विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
+      admissionNo="PROFILE:"+profileId;
+    }else{
+      if (!admissionNo || !session || !["primary","l-madhyamik","u-madhyamik"].includes(schoolKey) || !payload || typeof payload!=="object") return json({error:"रिपोर्ट कार्ड का डेटा अधूरा है।"},400);
+      const student = await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=?").bind(admissionNo).first();
+      if (!student) return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला। पहले School Office में विद्यार्थी जोड़ें।"},404);
+    }
+    if (!admissionNo || !session || !payload || typeof payload!=="object") return json({error:"रिपोर्ट कार्ड का डेटा अधूरा है।"},400);
     const safePayload = JSON.stringify(payload);
     if (safePayload.length > 30000) return json({error:"रिपोर्ट कार्ड का डेटा बहुत बड़ा है।"},413);
     await env.SCHOOL_DB.prepare(`INSERT INTO progress_cards(admission_no,school_key,session,payload_json,updated_at)
