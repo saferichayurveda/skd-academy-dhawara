@@ -32,7 +32,7 @@ export async function onRequest({request, env}) {
       if(!["primary","l-madhyamik","u-madhyamik"].includes(schoolKey))return json({error:"सही स्कूल चुनें।"},400);
       const profile=await env.SCHOOL_DB.prepare("SELECT profile_id FROM student_profiles WHERE profile_id=? AND school_key=?").bind(profileId,schoolKey).first();
       if(!profile)return json({error:"Student Import वाला विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
-      admissionNo="PROFILE:"+profileId;
+      if(!admissionNo || admissionNo.startsWith("PROFILE:")) admissionNo="PROFILE:"+profileId;
     }else{
       if (!admissionNo || !session || !["primary","l-madhyamik","u-madhyamik"].includes(schoolKey) || !payload || typeof payload!=="object") return json({error:"रिपोर्ट कार्ड का डेटा अधूरा है।"},400);
       const student = await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=?").bind(admissionNo).first();
