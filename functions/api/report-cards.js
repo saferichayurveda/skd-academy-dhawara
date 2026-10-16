@@ -32,7 +32,7 @@ export async function onRequest({request, env}) {
     if(profileId){
       const profile=await env.SCHOOL_DB.prepare("SELECT profile_id FROM student_profiles WHERE profile_id=? AND school_key=?").bind(profileId,schoolKey).first();
       if(!profile)return json({error:"Student Import का विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
-      admissionNo="PROFILE:"+profileId;
+      if(!admissionNo || admissionNo.startsWith("PROFILE:")) admissionNo="PROFILE:"+profileId;
     }else{
       const student = await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=?").bind(admissionNo).first();
       if (!student) return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला। पहले School Office में विद्यार्थी जोड़ें।"},404);
