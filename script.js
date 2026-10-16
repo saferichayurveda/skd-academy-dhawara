@@ -116,56 +116,70 @@ document.querySelectorAll("[data-lang-choice]").forEach((button) => button.addEv
 async function loadPublicGallery() {
   const grid = document.getElementById("publicMediaGrid");
   if (!grid) return;
-  try {
-    // Free gallery: list files from the public GitHub repository's media/ folder.
-    const response = await fetch("https://api.github.com/repos/saferichayurveda/skd-academy-dhawara/contents/media", {
-      headers: { Accept: "application/vnd.github+json" },
-      cache: "no-store"
-    });
-    if (!response.ok) throw new Error("media list unavailable");
-    const files = await response.json();
-    const allowed = /\.(jpe?g|png|webp|gif|avif|mp4|webm|mov)$/i;
-    const items = Array.isArray(files) ? files.filter((file) => file.type === "file" && allowed.test(file.name)) : [];
-    grid.replaceChildren();
-    if (items.length === 0) {
-      galleryMessageType = "empty";
-      const empty = document.createElement("p");
-      empty.className = "gallery-message";
-      empty.textContent = langValue(translations.galleryEmpty);
-      grid.appendChild(empty);
-      return;
+  const allowed = /\\.(jpe?g|png|webp|gif|avif|mp4|webm|mov)$/i;
+  const sources = await Promise.allSettled([
+    fetch("/api/media", { cache: "no-store" }).then(async response => {
+      if (!response.ok) throw new Error("R2 gallery unavailable");
+      const data = await response.json();
+      return (Array.isArray(data.items) ? data.items : []).map(item => ({
+        name: item.title || item.key,
+        source: "/api/media/" + encodeURIComponent(item.key),
+        type: item.type || "",
+        sortKey: item.uploadedAt || item.key
+      }));
+    }),
+    fetch("https://api.github.com/repos/saferichayurveda/skd-academy-dhawara/contents/media", {
+      headers: { Accept: "application/vnd.github+json" }, cache: "no-store"
+    }).then(async response => {
+      if (!response.ok) throw new Error("GitHub media unavailable");
+      const files = await response.json();
+      return (Array.isArray(files) ? files : []).filter(file => file.type === "file" && allowed.test(file.name)).map(file => ({
+        name: file.name.replace(/\\.[^.]+$/, "").replace(/[-_]+/g, " "),
+        source: "/media/" + encodeURIComponent(file.name),
+        type: /\\.(mp4|webm|mov)$/i.test(file.name) ? "video/" : "image/",
+        sortKey: file.name
+      }));
+    })
+  ]);
+  const items = [];
+  let sourceWorked = false;
+  for (const result of sources) {
+    if (result.status === "fulfilled") {
+      sourceWorked = true;
+      items.push(...result.value);
     }
-    galleryMessageType = "";
-    items.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    items.forEach((item) => {
-      const figure = document.createElement("figure");
-      figure.className = "public-media-card";
-      const extension = item.name.split(".").pop().toLowerCase();
-      const isVideo = ["mp4", "webm", "mov"].includes(extension);
-      const media = document.createElement(isVideo ? "video" : "img");
-      if (isVideo) {
-        media.controls = true;
-        media.preload = "metadata";
-        media.playsInline = true;
-      } else {
-        media.loading = "lazy";
-        media.alt = item.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
-      }
-      media.src = "/media/" + encodeURIComponent(item.name);
-      figure.appendChild(media);
-      const caption = document.createElement("figcaption");
-      caption.textContent = item.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
-      figure.appendChild(caption);
-      grid.appendChild(figure);
-    });
-  } catch {
-    galleryMessageType = "error";
-    grid.replaceChildren();
+  }
+  grid.replaceChildren();
+  if (!items.length) {
+    galleryMessageType = sourceWorked ? "empty" : "error";
     const message = document.createElement("p");
     message.className = "gallery-message";
-    message.textContent = langValue(translations.galleryError);
+    message.textContent = langValue(translations[sourceWorked ? "galleryEmpty" : "galleryError"]);
     grid.appendChild(message);
+    return;
   }
+  galleryMessageType = "";
+  items.sort((a, b) => String(a.sortKey).localeCompare(String(b.sortKey), undefined, { numeric: true }));
+  items.forEach(item => {
+    const figure = document.createElement("figure");
+    figure.className = "public-media-card";
+    const isVideo = item.type.startsWith("video/") || /\\.(mp4|webm|mov)$/i.test(item.source);
+    const media = document.createElement(isVideo ? "video" : "img");
+    if (isVideo) {
+      media.controls = true;
+      media.preload = "metadata";
+      media.playsInline = true;
+    } else {
+      media.loading = "lazy";
+      media.alt = item.name;
+    }
+    media.src = item.source;
+    figure.appendChild(media);
+    const caption = document.createElement("figcaption");
+    caption.textContent = item.name;
+    figure.appendChild(caption);
+    grid.appendChild(figure);
+  });
 }
 setPageLanguage(currentLanguage);
 loadPublicGallery();
