@@ -6,12 +6,12 @@
 <header class="head"><div><h1>S. K. D. Academy, Dhawara</h1><p class="sub">विद्यार्थी शुल्क रजिस्टर · Editable Spreadsheet</p></div></header>
 <div class="panel"><p class="note"><b>ध्यान दें:</b> यह खाली शुल्क शीट है। प्रत्येक सेल में क्लिक करके डेटा भरें। डेटा इस ब्राउज़र में अस्थायी रूप से रहता है; सुरक्षित रखने के लिए नियमित रूप से CSV डाउनलोड करें। CSV को LibreOffice Calc में खोलकर ODS में Save As कर सकते हैं। यह पेज अपने आप डेटा सर्वर पर अपलोड नहीं करता।</p>
 <div class="actions"><button class="primary" id="download">CSV डाउनलोड / Calc में खोलें</button><button id="import">पहले से भरी CSV खोलें</button><input type="file" id="file" accept=".csv,.txt" hidden><button id="addRows">+ 20 पंक्तियाँ</button><button id="clear">खाली शीट शुरू करें</button><button id="print">प्रिंट / PDF</button><a class="btn" href="/office-tools.html">Writer & Calc</a><a class="btn" href="/school-office.html">School Office</a></div>
-<div id="status" class="status">शीट में 100 खाली विद्यार्थी पंक्तियाँ तैयार हैं। कुल शुल्क का कॉलम स्वतः गणना के लिए दिया गया है; मासिक/अन्य शुल्क भरने के बाद जाँचकर कुल अपडेट करें।</div></div>
+<div id="status" class="status">शीट में 100 खाली विद्यार्थी पंक्तियाँ तैयार हैं। Tuition Fee से पहले Total Fee (Including Exam & Transport) कॉलम जोड़ा गया है। इसमें कुल वार्षिक शुल्क स्वयं भरें।</div></div>
 <div class="panel"><div class="gridwrap"><table class="grid" id="grid"><thead></thead><tbody></tbody></table></div></div>
 <p class="foot">निजी विद्यार्थी जानकारी साझा कंप्यूटर पर न छोड़ें। CSV में फॉर्मेटिंग या spreadsheet formulas सुरक्षित नहीं रहते; LibreOffice Calc में ODS के रूप में सेव करें।</p></main>
 <script>
 const $=s=>document.querySelector(s);
-const headers=['Admission No.','Student Name','Class',"Father's Name",'Registration Fee','Admission Fee','TBDI Charges','Session Fee',
+const headers=['Admission No.','Student Name','Class',"Father's Name",'Registration Fee','Admission Fee','TBDI Charges','Session Fee','Total Fee (Including Exam & Transport)',
 'Tuition Fee - April','Tuition Fee - May','Tuition Fee - June','Tuition Fee - July','Tuition Fee - August','Tuition Fee - September','Tuition Fee - October','Tuition Fee - November','Tuition Fee - December','Tuition Fee - January','Tuition Fee - February','Tuition Fee - March',
 'Transport - April','Transport - May','Transport - June','Transport - July','Transport - August','Transport - September','Transport - October','Transport - November','Transport - December','Transport - January','Transport - February','Transport - March',
 'Exam Fee - 1st Term','Exam Fee - 2nd Term','Exam Fee - Annual Term','Other Charges','Total Charges'];
