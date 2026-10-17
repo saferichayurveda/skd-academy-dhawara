@@ -9,7 +9,7 @@
 </style>
 </head>
 <body><main class="wrap">
-<header class="head"><img class="logo" src="/logo.jpg" alt="विद्यालय का लोगो"><div><h1>S. K. D. Academy, Dhawara</h1><p class="sub">School Office · Writer Document और Calc Spreadsheet</p></div><div class="actions"><a class="btn" href="/school-office.html">← School Office</a><a class="btn gold" href="/student-fee-record.html">विद्यार्थी फीस रजिस्टर</a><button id="helpBtn">उपयोग सहायता</button></div></header>
+<header class="head"><img class="logo" src="/logo.jpg" alt="विद्यालय का लोगो"><div><h1>S. K. D. Academy, Dhawara</h1><p class="sub">School Office · Writer Document और Calc Spreadsheet</p></div><div class="actions"><a class="btn" href="/school-office.html">← School Office</a><a class="btn gold" href="/student-fee-record.html">विद्यार्थी फीस रजिस्टर</a><button id="helpBtn">उपयोग सहायता</button><button class="primary" id="driveSaveAny">Google Drive में सेव करें</button></div></header>
 <div class="panel"><div class="tabs" role="tablist"><button class="active" data-pane="writer">📝 Writer Document</button><button data-pane="calc">▦ Calc Spreadsheet</button></div>
 <div id="help" class="status hidden">यह ब्राउज़र में चलने वाला हल्का एडिटर है। दस्तावेज़ HTML और स्प्रेडशीट CSV में डाउनलोड होती है, जिन्हें LibreOffice Writer/Calc में खोल सकते हैं। Writer में HTML खोलकर और Calc में CSV खोलकर जरूरत हो तो क्रमशः ODT/ODS के रूप में Save As करें। यह पूर्ण LibreOffice या DOCX/XLSX का मूल एडिटर नहीं है। फाइलें अपने आप सर्वर पर अपलोड नहीं होतीं। विद्यार्थियों की निजी जानकारी वाली फाइलें साझा कंप्यूटर पर न छोड़ें।</div>
 <section id="writer" class="pane active"><div class="panel"><div class="field"><label for="docTitle"><b>दस्तावेज़ का नाम</b></label><input id="docTitle" value="विद्यालय दस्तावेज़" maxlength="100"><button id="newDoc">नया दस्तावेज़</button><button id="openDoc">फाइल खोलें</button><input id="docFile" class="hidden" type="file" accept=".txt,.html,.htm,.odt,.doc,.docx"><button class="primary" id="saveDoc">Writer फाइल डाउनलोड</button><button id="printDoc">PDF / प्रिंट</button></div>
@@ -61,4 +61,26 @@ function parseCSV(text){const out=[];let row=[],field='',q=false;for(let i=0;i<t
 $('#csvFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const text=await f.text(),parsed=parseCSV(text.replace(/^\ufeff/,''));rows=Math.min(Math.max(parsed.length,30),200);cols=Math.min(Math.max(...parsed.map(r=>r.length),8),26);data=[];parsed.slice(0,200).forEach((r,i)=>r.slice(0,26).forEach((v,j)=>setRaw(i,j,v)));$('#sheetTitle').value=f.name.replace(/\.[^.]+$/,'');render();status('CSV आयात की गई। फाइल में 200 से अधिक पंक्तियाँ या 26 से अधिक कॉलम हों तो केवल निर्धारित सीमा तक आयात होगा।');e.target.value=''};
 $('#printSheet').onclick=()=>{render();let html='<h2>'+escapeHtml($('#sheetTitle').value)+'</h2><table>'+$('#sheet').innerHTML+'</table>';printArea(html,$('#sheetTitle').value||'शीट')};
 render();
-</script></body></html>
+async function saveCurrentToDrive(){
+ let clientId=localStorage.getItem('skdGoogleOAuthClientId');
+ if(!clientId){clientId=prompt('Google Drive कनेक्शन के लिए Google OAuth Client ID डालें। इसे Google Cloud Console में बनाना होगा।');if(!clientId)return;if(!clientId.includes('.apps.googleusercontent.com')){alert('Client ID सही नहीं लग रहा।');return}localStorage.setItem('skdGoogleOAuthClientId',clientId)}
+ if(!window.google?.accounts?.oauth2){status('Google sign-in लाइब्रेरी लोड नहीं हुई। इंटरनेट कनेक्शन जाँचकर पेज फिर खोलें।');return}
+ const isWriter=$('#writer').classList.contains('active');
+ let filename,mime,content;
+ if(isWriter){filename=safeName($('#docTitle').value||'विद्यालय दस्तावेज़')+'.html';mime='text/html';content='<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(filename)+'</title></head><body>'+$('#doc').innerHTML+'</body></html>'}
+ else {filename=safeName($('#sheetTitle').value||'विद्यालय रजिस्टर')+'.csv';mime='text/csv';const out=[];for(let r=0;r<rows;r++){const vals=[];for(let col=0;col<cols;col++)vals.push(csvEscape(getRaw(r,col)));if(vals.some(v=>v!==''))out.push(vals.join(','))}content='\ufeff'+out.join('\r\n')}
+ status('Google Drive से कनेक्शन की अनुमति माँगी जा रही है…');
+ const tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:'https://www.googleapis.com/auth/drive.file',callback:async(tokenResponse)=>{
+  if(tokenResponse.error||!tokenResponse.access_token){status('Google Drive अनुमति नहीं मिली। Google Cloud OAuth सेटिंग जाँचें।');return}
+  try{
+   const boundary='skd_drive_'+Date.now(),meta={name:filename,mimeType:mime};
+   const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: '+mime+'; charset=UTF-8\r\n\r\n'+content+'\r\n--'+boundary+'--';
+   const resp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+tokenResponse.access_token,'Content-Type':'multipart/related; boundary='+boundary},body});
+   const result=await resp.json();if(!resp.ok)throw new Error(result.error?.message||'Upload failed');
+   status('Google Drive में सेव हो गया: '+result.name+'। यह Drive में नई कॉपी है।');
+  }catch(err){status('Drive में सेव नहीं हुआ: '+err.message+'। Google Drive API और OAuth सेटिंग जाँचें।')}
+ }});
+ tokenClient.requestAccessToken({prompt:'consent'});
+}
+$('#driveSaveAny').onclick=saveCurrentToDrive;
+</script><script src="https://accounts.google.com/gsi/client" async defer></script></body></html>
