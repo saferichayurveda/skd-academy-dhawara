@@ -5,7 +5,7 @@
 </style></head><body><main class="wrap">
 <header class="head"><div><h1>S. K. D. Academy, Dhawara</h1><p class="sub">विद्यार्थी शुल्क रजिस्टर · Editable Spreadsheet</p></div></header>
 <div class="panel"><p class="note"><b>ध्यान दें:</b> यह खाली शुल्क शीट है। प्रत्येक सेल में क्लिक करके डेटा भरें। डेटा इस ब्राउज़र में अस्थायी रूप से रहता है; सुरक्षित रखने के लिए नियमित रूप से CSV डाउनलोड करें। CSV को LibreOffice Calc में खोलकर ODS में Save As कर सकते हैं। यह पेज अपने आप डेटा सर्वर पर अपलोड नहीं करता।</p>
-<div class="actions"><button class="primary" id="download">CSV डाउनलोड / Calc में खोलें</button><button id="import">पहले से भरी CSV खोलें</button><input type="file" id="file" accept=".csv,.txt" hidden><button id="addRows">+ 20 पंक्तियाँ</button><button id="clear">खाली शीट शुरू करें</button><button id="print">प्रिंट / PDF</button><a class="btn" href="/office-tools.html">Writer & Calc</a><a class="btn" href="/school-office.html">School Office</a></div>
+<div class="actions"><button class="primary" id="download">CSV डाउनलोड / Calc में खोलें</button><button id="driveSave">Google Drive में सेव करें</button><button id="import">पहले से भरी CSV खोलें</button><input type="file" id="file" accept=".csv,.txt" hidden><button id="addRows">+ 20 पंक्तियाँ</button><button id="clear">खाली शीट शुरू करें</button><button id="print">प्रिंट / PDF</button><a class="btn" href="/office-tools.html">Writer & Calc</a><a class="btn" href="/school-office.html">School Office</a></div>
 <div id="status" class="status">शीट में 100 खाली विद्यार्थी पंक्तियाँ तैयार हैं। Tuition Fee के महीनों से पहले Monthly Tuition Fee Payable और Transport के महीनों से पहले Monthly Transportation Fee Payable कॉलम हैं।</div></div>
 <div class="panel"><div class="gridwrap"><table class="grid" id="grid"><thead></thead><tbody></tbody></table></div></div>
 <p class="foot">निजी विद्यार्थी जानकारी साझा कंप्यूटर पर न छोड़ें। CSV में फॉर्मेटिंग या spreadsheet formulas सुरक्षित नहीं रहते; LibreOffice Calc में ODS के रूप में सेव करें।</p></main>
@@ -30,4 +30,23 @@ $('#addRows').onclick=()=>{rowCount=Math.min(500,rowCount+20);render();setStatus
 $('#clear').onclick=()=>{if(confirm('वर्तमान शीट का भरा हुआ डेटा हटाकर खाली शीट बनानी है?')){records=[];rowCount=100;render();setStatus('नई खाली शीट तैयार है।')}};
 $('#print').onclick=()=>{const w=window.open('','_blank');if(!w){setStatus('प्रिंट विंडो ब्लॉक हुई। Pop-ups की अनुमति दें।');return}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Student Fee Record</title><style>@page{size:A3 landscape;margin:8mm}body{font:8px Arial}h2{text-align:center}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:3px}th{background:#eee}</style></head><body><h2>S. K. D. Academy, Dhawara — Student Fee Record</h2>'+$('#grid').outerHTML+'</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300)};
 render();
-</script></body></html>
+async function saveFeeSheetToDrive(){
+ let clientId=localStorage.getItem('skdGoogleOAuthClientId');
+ if(!clientId){clientId=prompt('Google Drive कनेक्शन के लिए Google OAuth Client ID डालें। इसे Google Cloud Console में बनाना होगा।');if(!clientId)return;if(!clientId.includes('.apps.googleusercontent.com')){alert('Client ID सही नहीं लग रहा।');return}localStorage.setItem('skdGoogleOAuthClientId',clientId)}
+ if(!window.google?.accounts?.oauth2){setStatus('Google sign-in लाइब्रेरी लोड नहीं हुई। इंटरनेट कनेक्शन जाँचकर पेज फिर खोलें।');return}
+ setStatus('Google Drive से कनेक्शन की अनुमति माँगी जा रही है…');
+ const tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:'https://www.googleapis.com/auth/drive.file',callback:async(tokenResponse)=>{
+  if(tokenResponse.error||!tokenResponse.access_token){setStatus('Google Drive अनुमति नहीं मिली। Google Cloud OAuth सेटिंग जाँचें।');return}
+  try{
+   const boundary='skd_drive_'+Date.now(),name='SKD_Student_Fee_Record.csv',csv=toCSV();
+   const meta={name,mimeType:'text/csv'};
+   const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: text/csv; charset=UTF-8\r\n\r\n'+csv+'\r\n--'+boundary+'--';
+   const resp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+tokenResponse.access_token,'Content-Type':'multipart/related; boundary='+boundary},body});
+   const result=await resp.json();if(!resp.ok)throw new Error(result.error?.message||'Upload failed');
+   setStatus('Google Drive में सेव हो गया: '+result.name+' (Drive में फ़ाइल की नई कॉपी बनाई गई)।');
+  }catch(err){setStatus('Drive में सेव नहीं हुआ: '+err.message+'। Google Drive API और OAuth सेटिंग जाँचें।')}
+ }});
+ tokenClient.requestAccessToken({prompt:'consent'});
+}
+$('#driveSave').onclick=saveFeeSheetToDrive;
+</script><script src="https://accounts.google.com/gsi/client" async defer></script></body></html>
