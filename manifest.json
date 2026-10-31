@@ -1,0 +1,17 @@
+{
+  "id": "/school-office.html",
+  "name": "S. K. D. Academy, Dhawara",
+  "short_name": "SKD Academy",
+  "description": "School Office app for S. K. D. Academy, Dhawara, Kushinagar.",
+  "lang": "hi-IN",
+  "start_url": "/school-office.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f7fc",
+  "theme_color": "#12366a",
+  "icons": [
+    { "src": "/logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" },
+    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
