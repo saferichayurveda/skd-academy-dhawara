@@ -4,7 +4,7 @@ const APP_SHELL = [
   "/index.html",
   "/logo.jpg",
   "/app-icon.svg",
-  "/manifest.json"
+  "/manifest.json",\n  "/offline.html"
 ];
 
 self.addEventListener("install", (event) => {
@@ -41,7 +41,7 @@ self.addEventListener("fetch", (event) => {
         return response;
       }).catch(async () => {
         const cached = await caches.match(request);
-        return cached || caches.match("/school-office.html") || caches.match("/index.html");
+        return cached || caches.match("/offline.html") || caches.match("/school-office.html") || caches.match("/index.html");
       })
     );
     return;
