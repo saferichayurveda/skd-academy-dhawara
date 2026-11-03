@@ -11,11 +11,11 @@
 const $=s=>document.querySelector(s),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function api(url){const r=await fetch(url,{credentials:"same-origin"});let j={};try{j=await r.json()}catch{}if(!r.ok)throw Error(j.error||"HTTP "+r.status);return j}
 function groupClass(raw){
- let s=String(raw||"").toLowerCase().trim().replace(/[.\\s_-]+/g,"");
+ let s=String(raw||"").toLowerCase().trim().replace(/[.\s_-]+/g,"");
  s=s.replace(/^(class|grade|std|standard)/,"").replace(/(st|nd|rd|th)$/,"");
- if(["nursery","nursary","nur"].includes(s))return"nursery";
- if(["lkg","lowerkg"].includes(s))return"lkg";
- if(["ukg","upperkg"].includes(s))return"ukg";
+ if(s.includes("nursery")||s==="nursary"||s==="nur")return"nursery";
+ if(s==="lkg"||s==="lowerkg")return"lkg";
+ if(s==="ukg"||s==="upperkg")return"ukg";
  const n=Number(s);
  if(Number.isInteger(n)&&n>=1&&n<=5)return"primary";
  if(Number.isInteger(n)&&n>=6&&n<=8)return"middle";
