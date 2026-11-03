@@ -10,7 +10,18 @@
 <script>
 const $=s=>document.querySelector(s),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function api(url){const r=await fetch(url,{credentials:"same-origin"});let j={};try{j=await r.json()}catch{}if(!r.ok)throw Error(j.error||"HTTP "+r.status);return j}
-function groupClass(raw){let s=String(raw||"").toLowerCase().replace(/\s+/g,"").replace(/^class/,"");if(["nursery","nursary","nur"].includes(s))return"nursery";if(["lkg","l.k.g."].includes(s))return"lkg";if(["ukg","u.k.g."].includes(s))return"ukg";let n=Number(s);if(Number.isInteger(n)&&n>=1&&n<=5)return"primary";if(Number.isInteger(n)&&n>=6&&n<=8)return"middle";if(n===9)return"nine";return"other"}
+function groupClass(raw){
+ let s=String(raw||"").toLowerCase().trim().replace(/[.\\s_-]+/g,"");
+ s=s.replace(/^(class|grade|std|standard)/,"").replace(/(st|nd|rd|th)$/,"");
+ if(["nursery","nursary","nur"].includes(s))return"nursery";
+ if(["lkg","lowerkg"].includes(s))return"lkg";
+ if(["ukg","upperkg"].includes(s))return"ukg";
+ const n=Number(s);
+ if(Number.isInteger(n)&&n>=1&&n<=5)return"primary";
+ if(Number.isInteger(n)&&n>=6&&n<=8)return"middle";
+ if(n===9)return"nine";
+ return"other"
+}
 const schedules={
  nursery:[["17/11/26 Tuesday","Hindi Written"],["18/11/26 Wednesday","Math Written"],["19/11/26 Thursday","English Written"],["20/11/26 Friday","Hindi Oral / Art"],["21/11/26 Saturday","Math Oral"],["23/11/26 Monday","English Oral"]],
  lkg:[["17/11/26 Tuesday","Hindi Written"],["18/11/26 Wednesday","Math Written"],["19/11/26 Thursday","English Written"],["20/11/26 Friday","Hindi Oral / Art"],["21/11/26 Saturday","Math Oral"],["23/11/26 Monday","English Oral"]],
