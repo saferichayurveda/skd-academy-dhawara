@@ -1,72 +1,37 @@
 <!doctype html>
 <html lang="hi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#12366a">
-  <title>Gallery Manager | S. K. D. Academy</title>
-  <style>
-    *{box-sizing:border-box}body{margin:0;background:#f3f7fc;color:#17243a;font-family:Arial,sans-serif;line-height:1.6}.wrap{max-width:760px;margin:0 auto;padding:22px 16px 50px}.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.logo{width:56px;height:56px;object-fit:contain;background:#fff;border-radius:50%}h1{font-size:22px;color:#12366a;margin:0}h2{font-size:19px;color:#12366a;margin-top:0}.sub{margin:2px 0;color:#637083;font-size:14px}.language{margin-left:auto;display:flex;gap:6px}.language button{border:1px solid #cbd6e5;border-radius:8px;background:white;color:#12366a;padding:8px 10px;font-weight:bold}.language button[aria-pressed=true]{background:#12366a;color:white}.panel{background:white;border:1px solid #dfe7f1;border-radius:15px;padding:20px;margin:18px 0;box-shadow:0 4px 18px #0c28500b}.btn{display:inline-block;background:#12366a;color:white;text-decoration:none;padding:12px 16px;border-radius:9px;font-weight:bold}.muted{color:#637083;font-size:14px}.warning{background:#fff7df;border-left:4px solid #d79a12;padding:12px;border-radius:7px}.steps li{margin:10px 0}.back{color:#12366a;font-weight:bold;text-decoration:none}@media(max-width:480px){.language{margin-left:0;width:100%}.language button{flex:1}}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#12366a">
+<title>Gallery Manager | S. K. D. Academy</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f7fc;color:#17243a;font:15px/1.55 Arial,sans-serif}.wrap{max-width:780px;margin:auto;padding:20px 14px 48px}.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}.logo{width:54px;height:54px;object-fit:contain;background:#fff;border-radius:50%}h1{font-size:21px;color:#12366a;margin:0}h2{font-size:18px;color:#12366a;margin:0 0 12px}.sub,.muted{color:#637083;font-size:13px}.panel{background:#fff;border:1px solid #dfe7f1;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 4px 18px #0c285008}.field{display:flex;flex-direction:column;gap:6px;margin:12px 0}.field label{font-weight:bold;font-size:13px}.field input{width:100%;padding:12px;border:1px solid #cbd6e5;border-radius:8px;font:inherit}.btn,button{border:0;border-radius:9px;padding:12px 15px;font-weight:bold;cursor:pointer}.btn,button.primary{display:inline-block;background:#12366a;color:white;text-decoration:none}.light{background:#edf2f8;color:#12366a}.danger{background:#fff0ed;color:#9d2618}.status{padding:11px 12px;border-radius:8px;background:#eaf1fa;margin:12px 0;white-space:pre-wrap}.status.error{background:#fff0ed;color:#9d2618}.status.success{background:#eaf8ef;color:#166534}.warning{background:#fff7df;border-left:4px solid #d79a12;padding:12px;border-radius:7px;font-size:13px}.hidden{display:none!important}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{max-width:100%}.preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:15px}.item{border:1px solid #dfe7f1;border-radius:10px;overflow:hidden;background:white;min-width:0}.item img,.item video{display:block;width:100%;height:145px;object-fit:cover;background:#eef2f7}.item .meta{padding:9px}.item strong{display:block;font-size:13px;overflow-wrap:anywhere}.item small{display:block;color:#637083;font-size:12px;margin:4px 0}.item button{padding:7px 9px;font-size:12px}.login{max-width:440px;margin:24px auto}button:disabled{opacity:.55;cursor:wait}footer{text-align:center;color:#637083;font-size:12px;margin-top:20px}@media(max-width:480px){.panel{padding:14px}.top h1{font-size:18px}}
+</style>
 </head>
-<body>
-<div class="wrap">
-  <header class="top">
-    <img src="/logo.jpg" class="logo" alt="S. K. D. Academy logo">
-    <div><h1>S. K. D. Academy, Dhawara</h1><p class="sub" id="subtitle">फोटो एवं वीडियो गैलरी व्यवस्थापन</p></div>
-    <div class="language" aria-label="Choose language">
-      <button type="button" data-lang="hi" aria-pressed="true">हिंदी</button>
-      <button type="button" data-lang="en" aria-pressed="false">English</button>
-    </div>
-  </header>
-  <section class="panel">
-    <h2 id="heading">फोटो / वीडियो जोड़ें</h2>
-    <p id="intro">मुफ्त GitHub तरीके में मीडिया आपकी अधिकृत GitHub repository से जोड़ा जाएगा। अपलोड करने के लिए उसी GitHub खाते में साइन इन होना जरूरी है जिसके पास इस repository में बदलाव करने की अनुमति है।</p>
-    <p class="warning" id="warning">ध्यान दें: इस repository की फाइलें सार्वजनिक हैं। यहाँ जो फोटो/वीडियो जोड़े जाएँगे, वे वेबसाइट पर सभी लोग देख सकेंगे। केवल विद्यालय द्वारा प्रकाशित करने योग्य सामग्री जोड़ें।</p>
-    <a class="btn" id="upload" href="https://github.com/saferichayurveda/skd-academy-dhawara/upload/main/media">GitHub में फोटो / वीडियो जोड़ें ↗</a>
-    <h2 id="how" style="margin-top:24px">मोबाइल से कैसे जोड़ें?</h2>
-    <ol class="steps" id="steps">
-      <li>ऊपर दिए गए बटन को दबाएँ और GitHub में साइन इन करें।</li>
-      <li>फोन की Gallery से फोटो या वीडियो चुनें।</li>
-      <li>नीचे जाकर <b>Commit changes</b> दबाएँ।</li>
-      <li>Cloudflare वेबसाइट के अपडेट होने के लिए कुछ मिनट प्रतीक्षा करें।</li>
-    </ol>
-    <p class="muted" id="limit">बेहतर परिणाम के लिए छोटी फाइलें रखें (लगभग 20 MB से कम)। समर्थित प्रकार: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM, MOV।</p>
-  </section>
-  <p><a class="back" id="back" href="/">← मुख्य वेबसाइट पर वापस जाएँ</a></p>
+<body><div class="wrap">
+<header class="top"><img src="/logo.jpg" class="logo" alt="S. K. D. Academy logo"><div><h1>S. K. D. Academy, Dhawara</h1><p class="sub">Photo &amp; Video Gallery Manager</p></div><a class="btn light" href="/">मुख्य वेबसाइट</a></header>
+<div id="status" class="status" role="status">गैलरी व्यवस्थापन लोड हो रहा है…</div>
+<section id="loginPanel" class="panel login hidden"><h2>अधिकृत Admin Login</h2><p class="muted">विद्यालय का Admin Password दर्ज करें।</p><form id="loginForm"><div class="field"><label for="password">Admin Password</label><input id="password" type="password" required autocomplete="current-password"></div><button class="primary" type="submit">Login</button></form></section>
+<section id="appPanel" class="hidden">
+<div class="panel"><div class="row" style="justify-content:space-between"><h2>फोटो / वीडियो अपलोड करें</h2><button id="logoutBtn" class="light" type="button">Logout</button></div>
+<p class="muted">मोबाइल की Gallery या Files से फोटो/वीडियो चुनें, चाहें तो शीर्षक लिखें और Upload दबाएँ।</p>
+<div class="warning">मीडिया वेबसाइट पर सार्वजनिक रूप से दिखाई देगा। केवल विद्यालय द्वारा प्रकाशित करने की अनुमति वाली सामग्री अपलोड करें। बच्चों की गोपनीयता का ध्यान रखें। फोटो/वीडियो R2 स्टोरेज में सुरक्षित होंगे; स्टोरेज अभी configure न हो तो Cloudflare binding सेट करना आवश्यक है।</div>
+<form id="uploadForm"><div class="field"><label for="title">फोटो/वीडियो का शीर्षक (वैकल्पिक)</label><input id="title" name="title" maxlength="120" placeholder="जैसे: स्वतंत्रता दिवस समारोह 2026"></div>
+<div class="field"><label for="file">फोटो या वीडियो चुनें</label><input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" required><small class="muted">JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM या MOV; अधिकतम 50 MB प्रति फाइल।</small></div>
+<button id="uploadBtn" class="primary" type="submit">Upload / प्रकाशित करें</button></form>
 </div>
+<div class="panel"><div class="row" style="justify-content:space-between"><h2>अपलोड की गई मीडिया</h2><button id="refreshBtn" class="light" type="button">Refresh</button></div><p class="muted">यहाँ R2 से अपलोड की गई फोटो/वीडियो दिखाई देंगी।</p><div id="mediaList" class="preview"><p class="muted">मीडिया लोड हो रही है…</p></div></div>
+</section><p><a href="/" class="muted">← मुख्य वेबसाइट पर वापस जाएँ</a></p><footer>S. K. D. Academy, Dhawara</footer></div>
 <script>
-const words = {
-  hi: {
-    subtitle:"फोटो एवं वीडियो गैलरी व्यवस्थापन", heading:"फोटो / वीडियो जोड़ें",
-    intro:"मुफ्त GitHub तरीके में मीडिया आपकी अधिकृत GitHub repository से जोड़ा जाएगा। अपलोड करने के लिए उसी GitHub खाते में साइन इन होना जरूरी है जिसके पास इस repository में बदलाव करने की अनुमति है।",
-    warning:"ध्यान दें: इस repository की फाइलें सार्वजनिक हैं। यहाँ जो फोटो/वीडियो जोड़े जाएँगे, वे वेबसाइट पर सभी लोग देख सकेंगे। केवल विद्यालय द्वारा प्रकाशित करने योग्य सामग्री जोड़ें।",
-    upload:"GitHub में फोटो / वीडियो जोड़ें ↗", how:"मोबाइल से कैसे जोड़ें?",
-    steps:["ऊपर दिए गए बटन को दबाएँ और GitHub में साइन इन करें।","फोन की Gallery से फोटो या वीडियो चुनें।","नीचे जाकर Commit changes दबाएँ।","Cloudflare वेबसाइट के अपडेट होने के लिए कुछ मिनट प्रतीक्षा करें।"],
-    limit:"बेहतर परिणाम के लिए छोटी फाइलें रखें (लगभग 20 MB से कम)। समर्थित प्रकार: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM, MOV.",
-    back:"← मुख्य वेबसाइट पर वापस जाएँ"
-  },
-  en: {
-    subtitle:"Photo & Video Gallery Manager", heading:"Add Photos / Videos",
-    intro:"With the free GitHub method, media is added through your authorised GitHub repository. You must sign in to a GitHub account that has permission to edit this repository.",
-    warning:"Important: Files in this repository are public. Photos/videos added here will be visible to everyone on the website. Only upload media approved for public display by the school.",
-    upload:"Add Photos / Videos on GitHub ↗", how:"How to add from your phone",
-    steps:["Tap the button above and sign in to GitHub.","Choose photos or videos from your phone gallery.","Scroll down and tap Commit changes.","Wait a few minutes for the Cloudflare website to update."],
-    limit:"For best results, use small files (ideally under 20 MB). Supported types: JPG, PNG, WEBP, GIF, AVIF, MP4, WEBM, MOV.",
-    back:"← Back to main website"
-  }
-};
-function choose(lang){
- const d=words[lang]||words.hi; document.documentElement.lang=lang;
- document.querySelectorAll("[data-lang]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===lang)));
- for(const id of ["subtitle","heading","intro","warning","upload","how","limit","back"]) document.getElementById(id).textContent=d[id];
- const list=document.getElementById("steps"); list.replaceChildren();
- d.steps.forEach(t=>{const li=document.createElement("li");li.textContent=t;list.appendChild(li);});
- try{localStorage.setItem("skd-language",lang)}catch{}
-}
-document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>choose(b.dataset.lang)));
-let initial="hi";try{initial=localStorage.getItem("skd-language")==="en"?"en":"hi"}catch{}choose(initial);
-</script>
-</body>
-</html>
+const statusBox=document.getElementById("status"),loginPanel=document.getElementById("loginPanel"),appPanel=document.getElementById("appPanel"),loginForm=document.getElementById("loginForm"),uploadForm=document.getElementById("uploadForm"),fileInput=document.getElementById("file"),titleInput=document.getElementById("title"),uploadBtn=document.getElementById("uploadBtn"),mediaList=document.getElementById("mediaList");
+function showStatus(message,type=""){statusBox.textContent=message;statusBox.className="status"+(type?" "+type:"");}
+async function api(url,options={}){const response=await fetch(url,{credentials:"same-origin",...options});let data={};try{data=await response.json()}catch{}if(!response.ok)throw new Error(data.error||("Request failed ("+response.status+")"));return data;}
+function showLoggedIn(value){loginPanel.classList.toggle("hidden",value);appPanel.classList.toggle("hidden",!value);if(value){statusBox.classList.add("hidden");loadMedia()}else statusBox.classList.remove("hidden")}
+async function checkSession(){try{const data=await api("/api/session");showLoggedIn(Boolean(data.authenticated));if(!data.authenticated)showStatus("कृपया Admin Login करें।")}catch{showLoggedIn(false);showStatus("Login सेवा अभी उपलब्ध नहीं है। पेज refresh करके फिर कोशिश करें।","error")}}
+loginForm.addEventListener("submit",async event=>{event.preventDefault();const button=loginForm.querySelector("button");button.disabled=true;showStatus("Login हो रहा है…");try{await api("/api/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:document.getElementById("password").value})});document.getElementById("password").value="";showLoggedIn(true);showStatus("Login सफल।","success")}catch(error){showStatus(error.message,"error")}finally{button.disabled=false}});
+document.getElementById("logoutBtn").addEventListener("click",async()=>{try{await api("/api/session",{method:"DELETE"})}catch{}showLoggedIn(false);showStatus("आप Logout हो गए हैं।")});
+uploadForm.addEventListener("submit",async event=>{event.preventDefault();const file=fileInput.files&&fileInput.files[0];if(!file){showStatus("पहले फोटो या वीडियो चुनें।","error");return}if(file.size>50*1024*1024){showStatus("फाइल 50 MB से बड़ी है। कृपया छोटी फाइल चुनें।","error");return}const form=new FormData();form.append("file",file);form.append("title",titleInput.value.trim());uploadBtn.disabled=true;showStatus("फाइल अपलोड हो रही है… कृपया पेज बंद न करें।");try{await api("/api/media",{method:"POST",body:form});uploadForm.reset();showStatus("अपलोड सफल! वेबसाइट की Gallery में दिखाई देने के लिए मुख्य पेज refresh करें।","success");await loadMedia()}catch(error){showStatus(error.message,"error")}finally{uploadBtn.disabled=false}});
+document.getElementById("refreshBtn").addEventListener("click",loadMedia);
+async function loadMedia(){mediaList.replaceChildren();try{const data=await api("/api/media");if(!data.items||!data.items.length){mediaList.textContent="अभी R2 में कोई फोटो/वीडियो नहीं है।";return}for(const item of data.items){const card=document.createElement("article");card.className="item";const video=item.type.startsWith("video/");const media=document.createElement(video?"video":"img");media.src="/api/media/"+encodeURIComponent(item.key);if(video){media.controls=true;media.preload="metadata";media.playsInline=true}else{media.loading="lazy";media.alt=item.title||"School gallery photo"}card.appendChild(media);const meta=document.createElement("div");meta.className="meta";const title=document.createElement("strong");title.textContent=item.title||item.key;meta.appendChild(title);const size=document.createElement("small");size.textContent=(item.size/1024/1024).toFixed(2)+" MB";meta.appendChild(size);const del=document.createElement("button");del.className="danger";del.type="button";del.textContent="Delete";del.addEventListener("click",async()=>{if(!confirm("क्या इस फोटो/वीडियो को हटाना चाहते हैं?"))return;del.disabled=true;try{await api("/api/media/"+encodeURIComponent(item.key),{method:"DELETE"});showStatus("मीडिया हटा दी गई।","success");await loadMedia()}catch(error){showStatus(error.message,"error");del.disabled=false}});meta.appendChild(del);card.appendChild(meta);mediaList.appendChild(card)}}catch(error){mediaList.textContent=error.message;showStatus(error.message,"error")}}
+checkSession();
+</script></body></html>
