@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "S. K. D. Academy, Dhawara",
+  "short_name": "SKD Academy",
+  "description": "Official mobile app of S. K. D. Academy, Dhawara, Kushinagar.",
+  "lang": "hi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#12366a",
+  "categories": ["education"],
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
