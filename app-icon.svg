@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#12366a"/>
+  <circle cx="256" cy="242" r="174" fill="#fff" stroke="#d7ad45" stroke-width="18"/>
+  <path d="M116 258c48-26 96-26 140 0v122c-44-26-92-26-140 0z" fill="#f7f3e8" stroke="#12366a" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M256 258c44-26 92-26 140 0v122c-48-26-96-26-140 0z" fill="#f7f3e8" stroke="#12366a" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M256 258v122" stroke="#d7ad45" stroke-width="10"/>
+  <path d="M256 112c-25 31-34 54-26 75 7 18 25 25 26 48 1-23 19-30 26-48 8-21-1-44-26-75z" fill="#d7ad45" stroke="#12366a" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M256 183v44" stroke="#12366a" stroke-width="10" stroke-linecap="round"/>
+  <text x="256" y="455" text-anchor="middle" font-family="Arial,sans-serif" font-size="39" font-weight="700" fill="#fff">S K D</text>
+</svg>
