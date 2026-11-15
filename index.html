@@ -14,6 +14,8 @@
   <meta property="og:url" content="https://skd-academy-dhawara.pages.dev/">
   <meta property="og:image" content="https://skd-academy-dhawara.pages.dev/logo.jpg">
   <title>S. K. D. Academy, Dhawara | Official Website</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/app-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <style>
     .language-switch{display:flex;align-items:center;gap:4px;white-space:nowrap}
@@ -83,5 +85,10 @@
   </main>
   <footer><img src="logo.jpg" alt="" class="footer-logo"><div><strong>S. K. D. Academy, Dhawara</strong><p>धवारा, जनपद कुशीनगर, उत्तर प्रदेश</p><small>© <span id="year"></span> S. K. D. Academy, Dhawara</small><p><a href="/school-office.html" rel="nofollow">School Office / Admin Login</a></p></div></footer>
   <script src="script.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(() => {}));
+    }
+  </script>
 </body>
 </html>
