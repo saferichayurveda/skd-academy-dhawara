@@ -17,3 +17,13 @@ CREATE TABLE IF NOT EXISTS fee_session_settings (
 );
 INSERT OR IGNORE INTO fee_session_settings (id, current_session, next_session)
 VALUES (1, '2026-27', '2027-28');
+
+-- Default fee schedule supplied by the school for 2026-27.
+INSERT OR IGNORE INTO fee_settings (academic_session,class_name,monthly_fee,quarterly_discount_percent,half_yearly_discount_percent,yearly_discount_percent)
+VALUES
+('2026-27','Nursery',400,0,10,15),
+('2026-27','LKG से 7वीं',350,0,10,15),
+('2026-27','8वीं से 10वीं',450,0,10,15),
+('2027-28','Nursery',400,0,10,15),
+('2027-28','LKG से 7वीं',350,0,10,15),
+('2027-28','8वीं से 10वीं',450,0,10,15);
