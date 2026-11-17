@@ -5,111 +5,83 @@ const clean = (value, max = 160) => String(value ?? "").trim().slice(0, max);
 const rupees = (value) => Number.isFinite(Number(value)) ? Math.max(0, Math.round(Number(value))) : 0;
 
 async function loadData(db) {
-  const [students, payments, attendance] = await Promise.all([
-    db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.amount),0) AS paidFee FROM students s LEFT JOIN payments p ON p.student_id=s.id GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
-    db.prepare("SELECT p.id, p.receipt_no AS receiptNo, s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, p.amount AS paidFee, SUM(p.amount) OVER (PARTITION BY p.student_id ORDER BY p.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulativePaidFee, p.payment_date AS paymentDate, p.payment_mode AS paymentMode, p.remarks FROM payments p JOIN students s ON s.id=p.student_id ORDER BY p.id DESC LIMIT 1000").all(),
-    db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all()
+  const [students, payments, attendance, feeSettings, sessionSettings] = await Promise.all([
+    db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.paid_fee),0) AS paidFee FROM students s LEFT JOIN payments p ON p.admission_no=s.admission_no GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
+    db.prepare("SELECT p.id, p.receipt_no AS receiptNo, p.admission_no AS admissionNo, p.student_name AS studentName, p.father_name AS fatherName, p.mobile_number AS mobileNumber, p.class_name AS className, p.total_fee AS totalFee, p.paid_fee AS paidFee, (SELECT COALESCE(SUM(p2.paid_fee),0) FROM payments p2 WHERE p2.admission_no=p.admission_no AND p2.id<=p.id) AS cumulativePaidFee, p.payment_date AS paymentDate, p.payment_mode AS paymentMode, p.remarks FROM payments p ORDER BY p.id DESC LIMIT 1000").all(),
+    db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status, remarks FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all(),
+    db.prepare("SELECT academic_session AS academicSession, class_name AS className, monthly_fee AS monthlyFee, quarterly_discount_percent AS quarterlyDiscountPercent, half_yearly_discount_percent AS halfYearlyDiscountPercent, yearly_discount_percent AS yearlyDiscountPercent FROM fee_settings ORDER BY academic_session, class_name").all(),
+    db.prepare("SELECT current_session AS currentSession, next_session AS nextSession FROM fee_session_settings WHERE id=1").first()
   ]);
-  return { students: students.results || [], payments: payments.results || [], attendance: attendance.results || [] };
+  return { students: students.results || [], payments: payments.results || [], attendance: attendance.results || [], feeSettings: feeSettings.results || [], sessionSettings: sessionSettings || { currentSession: "2026-27", nextSession: "2027-28" } };
 }
 
 export async function onRequest({ request, env }) {
   if (!env.SCHOOL_DB) return json({ error: "School management database अभी configure नहीं है। Cloudflare में SCHOOL_DB D1 binding जोड़ें।" }, 503);
   if (!(await isAuthenticated(request, env))) return json({ error: "कृपया School Admin Login करें।" }, 401);
-
   if (request.method === "GET") {
     try { return json(await loadData(env.SCHOOL_DB)); }
-    catch (error) { console.error("School Office GET database error:", error); return json({ error: "डेटा पढ़ने में समस्या हुई।", detail: String(error?.message || error).slice(0, 240) }, 500); }
+    catch (error) { console.error("School Office GET database error:", error); return json({ error: "डेटा पढ़ने में समस्या हुई। पहले migrations/0001 और 0002 लागू करें।", detail: String(error?.message || error).slice(0, 240) }, 500); }
   }
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, { Allow: "GET, POST" });
   if (!originIsSame(request)) return json({ error: "अनुरोध अस्वीकार किया गया।" }, 403);
-
   let body;
   try { body = await request.json(); } catch { return json({ error: "सही अनुरोध भेजें।" }, 400); }
   const action = clean(body.action, 40);
-
   try {
-    if (action === "save_student") {
-      const admissionNo = clean(body.admissionNo, 40);
-      const studentName = clean(body.studentName, 120);
-      const fatherName = clean(body.fatherName, 120);
-      const mobileNumber = clean(body.mobileNumber, 10);
+    if (action === "save_fee_settings") {
+      const academicSession = clean(body.academicSession, 20);
       const className = clean(body.className, 40);
-      const totalFee = rupees(body.totalFee);
-      if (!admissionNo || !studentName || !className || !/^[0-9]{10}$/.test(mobileNumber)) return json({ error: "Admission No., विद्यार्थी का नाम, Class और 10 अंकों का मोबाइल नंबर सही भरें।" }, 400);
-      await env.SCHOOL_DB.prepare("INSERT INTO students (admission_no, student_name, father_name, mobile_number, class_name, total_fee) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name, father_name=excluded.father_name, mobile_number=excluded.mobile_number, class_name=excluded.class_name, total_fee=excluded.total_fee")
-        .bind(admissionNo, studentName, fatherName, mobileNumber, className, totalFee).run();
-      return json({ ok: true }, 201);
+      const monthlyFee = rupees(body.monthlyFee);
+      const quarterlyDiscountPercent = Number(body.quarterlyDiscountPercent);
+      const halfYearlyDiscountPercent = Number(body.halfYearlyDiscountPercent);
+      const yearlyDiscountPercent = Number(body.yearlyDiscountPercent);
+      if (!academicSession || !className || ![quarterlyDiscountPercent, halfYearlyDiscountPercent, yearlyDiscountPercent].every(n => Number.isFinite(n) && n >= 0 && n <= 100)) return json({ error: "सत्र, कक्षा और छूट प्रतिशत सही भरें।" }, 400);
+      await env.SCHOOL_DB.prepare("INSERT INTO fee_settings (academic_session,class_name,monthly_fee,quarterly_discount_percent,half_yearly_discount_percent,yearly_discount_percent,updated_at) VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(academic_session,class_name) DO UPDATE SET monthly_fee=excluded.monthly_fee,quarterly_discount_percent=excluded.quarterly_discount_percent,half_yearly_discount_percent=excluded.half_yearly_discount_percent,yearly_discount_percent=excluded.yearly_discount_percent,updated_at=CURRENT_TIMESTAMP")
+        .bind(academicSession,className,monthlyFee,quarterlyDiscountPercent,halfYearlyDiscountPercent,yearlyDiscountPercent).run();
+      return json({ ok: true });
     }
-
-    if (action === "delete_student") {
-      const admissionNo = clean(body.admissionNo, 40);
-      if (!admissionNo) return json({ error: "Admission No. सही नहीं है।" }, 400);
-      const student = await env.SCHOOL_DB.prepare("SELECT id FROM students WHERE admission_no=?").bind(admissionNo).first();
-      if (!student) return json({ error: "विद्यार्थी रिकॉर्ड नहीं मिला।" }, 404);
-      const payment = await env.SCHOOL_DB.prepare("SELECT id FROM payments WHERE student_id=? LIMIT 1").bind(student.id).first();
-      if (payment) return json({ error: "इस विद्यार्थी की फीस जमा होने का रिकॉर्ड है। हिसाब सुरक्षित रखने के लिए इसे हटाया नहीं जा सकता। पहले विद्यार्थी का रिकॉर्ड सुधारें।" }, 409);
-      await env.SCHOOL_DB.prepare("DELETE FROM students WHERE id=?").bind(student.id).run();
-      return json({ ok: true }, 200);
+    if (action === "save_fee_sessions") {
+      const currentSession = clean(body.currentSession,20), nextSession = clean(body.nextSession,20);
+      if (!currentSession || !nextSession || currentSession === nextSession) return json({ error: "वर्तमान और अगला सत्र अलग-अलग भरें।" },400);
+      await env.SCHOOL_DB.prepare("INSERT INTO fee_session_settings (id,current_session,next_session,updated_at) VALUES (1,?,?,CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET current_session=excluded.current_session,next_session=excluded.next_session,updated_at=CURRENT_TIMESTAMP").bind(currentSession,nextSession).run();
+      return json({ok:true});
     }
-
-    if (action === "bulk_import_students") {
-      if (!Array.isArray(body.students) || body.students.length < 1 || body.students.length > 500) {
-        return json({ error: "एक बार में 1 से 500 विद्यार्थियों के रिकॉर्ड भेजें।" }, 400);
+    if (action === "save_student") {
+      const admissionNo=clean(body.admissionNo,40), studentName=clean(body.studentName,120), fatherName=clean(body.fatherName,120), mobileNumber=clean(body.mobileNumber,10), className=clean(body.className,40), totalFee=rupees(body.totalFee);
+      if(!admissionNo||!studentName||!className||!/^[0-9]{10}$/.test(mobileNumber)) return json({error:"Admission No., विद्यार्थी का नाम, Class और 10 अंकों का मोबाइल नंबर सही भरें।"},400);
+      await env.SCHOOL_DB.prepare("INSERT INTO students (admission_no,student_name,father_name,mobile_number,class_name,total_fee) VALUES (?,?,?,?,?,?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name,father_name=excluded.father_name,mobile_number=excluded.mobile_number,class_name=excluded.class_name,total_fee=excluded.total_fee").bind(admissionNo,studentName,fatherName,mobileNumber,className,totalFee).run();
+      return json({ok:true},201);
+    }
+    if(action==="delete_student"){
+      const admissionNo=clean(body.admissionNo,40); if(!admissionNo)return json({error:"Admission No. सही नहीं है।"},400);
+      const payment=await env.SCHOOL_DB.prepare("SELECT id FROM payments WHERE admission_no=? LIMIT 1").bind(admissionNo).first();
+      if(payment)return json({error:"इस विद्यार्थी की फीस का रिकॉर्ड है। हिसाब सुरक्षित रखने के लिए इसे हटाया नहीं जा सकता।"},409);
+      await env.SCHOOL_DB.prepare("DELETE FROM students WHERE admission_no=?").bind(admissionNo).run(); return json({ok:true});
+    }
+    if(action==="bulk_import_students"){
+      if(!Array.isArray(body.students)||body.students.length<1||body.students.length>500)return json({error:"एक बार में 1 से 500 विद्यार्थियों के रिकॉर्ड भेजें।"},400);
+      const seen=new Set(), rows=[];
+      for(let i=0;i<body.students.length;i++){const item=body.students[i]||{}, admissionNo=clean(item.admissionNo,40), studentName=clean(item.studentName,120), fatherName=clean(item.fatherName,120), mobileNumber=clean(item.mobileNumber,10), className=clean(item.className,40), totalFee=rupees(item.totalFee);
+        if(!admissionNo||!studentName||!className||!/^[0-9]{10}$/.test(mobileNumber))return json({error:"CSV की पंक्ति "+(Number(item.rowNumber)||i+2)+" में जानकारी सही नहीं है। कोई रिकॉर्ड सेव नहीं किया गया।"},400);
+        if(seen.has(admissionNo))return json({error:"CSV में Admission No. "+admissionNo+" दो बार है।"},400); seen.add(admissionNo);
+        rows.push(env.SCHOOL_DB.prepare("INSERT INTO students (admission_no,student_name,father_name,mobile_number,class_name,total_fee) VALUES (?,?,?,?,?,?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name,father_name=excluded.father_name,mobile_number=excluded.mobile_number,class_name=excluded.class_name,total_fee=excluded.total_fee").bind(admissionNo,studentName,fatherName,mobileNumber,className,totalFee));
       }
-      const seen = new Set();
-      const rows = [];
-      for (let i = 0; i < body.students.length; i++) {
-        const item = body.students[i] || {};
-        const admissionNo = clean(item.admissionNo, 40);
-        const studentName = clean(item.studentName, 120);
-        const fatherName = clean(item.fatherName, 120);
-        const mobileNumber = clean(item.mobileNumber, 10);
-        const className = clean(item.className, 40);
-        const totalFee = rupees(item.totalFee);
-        if (!admissionNo || !studentName || !className || !/^[0-9]{10}$/.test(mobileNumber)) {
-          return json({ error: "CSV की पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Admission No., विद्यार्थी का नाम, Class या 10 अंकों का मोबाइल नंबर सही नहीं है। कोई रिकॉर्ड सेव नहीं किया गया।" }, 400);
-        }
-        if (seen.has(admissionNo)) return json({ error: "CSV में Admission No. " + admissionNo + " दो बार है। डुप्लीकेट हटाकर फिर अपलोड करें।" }, 400);
-        seen.add(admissionNo);
-        rows.push(env.SCHOOL_DB.prepare("INSERT INTO students (admission_no, student_name, father_name, mobile_number, class_name, total_fee) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name, father_name=excluded.father_name, mobile_number=excluded.mobile_number, class_name=excluded.class_name, total_fee=excluded.total_fee")
-          .bind(admissionNo, studentName, fatherName, mobileNumber, className, totalFee));
-      }
-      await env.SCHOOL_DB.batch(rows);
-      return json({ ok: true, imported: rows.length }, 201);
+      await env.SCHOOL_DB.batch(rows);return json({ok:true,imported:rows.length},201);
     }
-
-    if (action === "add_payment") {
-      const admissionNo = clean(body.admissionNo, 40);
-      const paidFee = rupees(body.paidFee);
-      const paymentDate = clean(body.paymentDate, 10) || today();
-      const paymentMode = clean(body.paymentMode, 30) || "Cash";
-      const remarks = clean(body.remarks, 300);
-      if (!admissionNo || paidFee <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) return json({ error: "विद्यार्थी, जमा राशि और सही भुगतान तारीख भरें।" }, 400);
-      const student = await env.SCHOOL_DB.prepare("SELECT id, admission_no, student_name, father_name, mobile_number, class_name, total_fee FROM students WHERE admission_no=?").bind(admissionNo).first();
-      if (!student) return json({ error: "यह Admission No. विद्यार्थी सूची में नहीं मिला। पहले विद्यार्थी जोड़ें।" }, 404);
-      const inserted = await env.SCHOOL_DB.prepare("INSERT INTO payments (student_id, amount, payment_date, receipt_no, payment_mode, remarks, mobile_number) VALUES (?, ?, ?, NULL, ?, ?, ?)")
-        .bind(student.id, paidFee, paymentDate, paymentMode, remarks, student.mobile_number).run();
-      const id = inserted.meta?.last_row_id;
-      if (!id) return json({ error: "भुगतान दर्ज हुआ या नहीं, इसकी पुष्टि नहीं हो सकी। रिकॉर्ड जाँचें।" }, 500);
-      const receiptNo = "SKD-" + String(id).padStart(4, "0");
-      await env.SCHOOL_DB.prepare("UPDATE payments SET receipt_no=? WHERE id=?").bind(receiptNo, id).run();
-      return json({ ok: true, receiptNo }, 201);
+    if(action==="add_payment"){
+      const admissionNo=clean(body.admissionNo,40), paidFee=rupees(body.paidFee), paymentDate=clean(body.paymentDate,10)||today(), paymentMode=clean(body.paymentMode,30)||"Cash", remarks=clean(body.remarks,300);
+      if(!admissionNo||paidFee<=0||!/^d{4}-d{2}-d{2}$/.test(paymentDate))return json({error:"विद्यार्थी, जमा राशि और सही भुगतान तारीख भरें।"},400);
+      const student=await env.SCHOOL_DB.prepare("SELECT admission_no,student_name,father_name,mobile_number,class_name,total_fee FROM students WHERE admission_no=?").bind(admissionNo).first();
+      if(!student)return json({error:"यह Admission No. विद्यार्थी सूची में नहीं मिला। पहले विद्यार्थी जोड़ें।"},404);
+      const inserted=await env.SCHOOL_DB.prepare("INSERT INTO payments (admission_no,student_name,father_name,mobile_number,class_name,total_fee,paid_fee,payment_date,receipt_no,payment_mode,remarks) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)").bind(student.admission_no,student.student_name,student.father_name,student.mobile_number,student.class_name,student.total_fee,paidFee,paymentDate,paymentMode,remarks).run();
+      const id=inserted.meta?.last_row_id;if(!id)return json({error:"भुगतान दर्ज होने की पुष्टि नहीं हो सकी।"},500);
+      const receiptNo="SKD-"+String(id).padStart(4,"0");await env.SCHOOL_DB.prepare("UPDATE payments SET receipt_no=? WHERE id=?").bind(receiptNo,id).run();return json({ok:true,receiptNo},201);
     }
-
-    if (action === "save_attendance") {
-      const staffName = clean(body.staffName, 120);
-      const attendanceDate = clean(body.attendanceDate, 10) || today();
-      const status = clean(body.status, 1).toUpperCase();
-      const remarks = clean(body.remarks, 300);
-      if (!staffName || !/^\d{4}-\d{2}-\d{2}$/.test(attendanceDate) || !["P","A","L"].includes(status)) return json({ error: "शिक्षक का नाम, तारीख और P/A/L स्थिति सही भरें।" }, 400);
-      await env.SCHOOL_DB.prepare("INSERT INTO staff_attendance (staff_name, attendance_date, status) VALUES (?, ?, ?) ON CONFLICT(staff_name, attendance_date) DO UPDATE SET status=excluded.status")
-        .bind(staffName, attendanceDate, status).run();
-      return json({ ok: true }, 201);
+    if(action==="save_attendance"){
+      const staffName=clean(body.staffName,120), attendanceDate=clean(body.attendanceDate,10)||today(), status=clean(body.status,1).toUpperCase(), remarks=clean(body.remarks,300);
+      if(!staffName||!/^d{4}-d{2}-d{2}$/.test(attendanceDate)||!["P","A","L"].includes(status))return json({error:"शिक्षक का नाम, तारीख और P/A/L स्थिति सही भरें।"},400);
+      await env.SCHOOL_DB.prepare("INSERT INTO staff_attendance (staff_name,attendance_date,status,remarks) VALUES (?,?,?,?) ON CONFLICT(staff_name,attendance_date) DO UPDATE SET status=excluded.status,remarks=excluded.remarks").bind(staffName,attendanceDate,status,remarks).run();return json({ok:true},201);
     }
-
-    return json({ error: "अज्ञात कार्य अनुरोध।" }, 400);
-  } catch {
-    return json({ error: "रिकॉर्ड सेव नहीं हुआ। कृपया दोबारा कोशिश करें।" }, 500);
-  }
+    return json({error:"अज्ञात कार्य अनुरोध।"},400);
+  } catch(error){console.error("School API error:",error);return json({error:"रिकॉर्ड सेव नहीं हुआ। कृपया डेटाबेस migration और जानकारी जाँचें।",detail:String(error?.message||error).slice(0,220)},500);}
 }
