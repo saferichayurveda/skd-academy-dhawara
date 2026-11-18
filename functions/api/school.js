@@ -5,12 +5,14 @@ const clean = (value, max = 160) => String(value ?? "").trim().slice(0, max);
 const rupees = (value) => Number.isFinite(Number(value)) ? Math.max(0, Math.round(Number(value))) : 0;
 
 async function loadData(db) {
-  const [students, payments, attendance] = await Promise.all([
+  const [students, payments, attendance, feeSettings, sessionSettings] = await Promise.all([
     db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.amount),0) AS paidFee FROM students s LEFT JOIN payments p ON p.student_id=s.id GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
     db.prepare("SELECT p.id, p.receipt_no AS receiptNo, s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, p.amount AS paidFee, SUM(p.amount) OVER (PARTITION BY p.student_id ORDER BY p.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulativePaidFee, p.payment_date AS paymentDate, p.payment_mode AS paymentMode, p.remarks FROM payments p JOIN students s ON s.id=p.student_id ORDER BY p.id DESC LIMIT 1000").all(),
-    db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all()
+    db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all(),
+    db.prepare("SELECT academic_session AS academicSession, class_name AS className, monthly_fee AS monthlyFee, quarterly_discount_percent AS quarterlyDiscountPercent, half_yearly_discount_percent AS halfYearlyDiscountPercent, yearly_discount_percent AS yearlyDiscountPercent FROM fee_settings ORDER BY academic_session, class_name").all(),
+    db.prepare("SELECT current_session AS currentSession, next_session AS nextSession FROM fee_session_settings WHERE id=1").first()
   ]);
-  return { students: students.results || [], payments: payments.results || [], attendance: attendance.results || [] };
+  return { students: students.results || [], payments: payments.results || [], attendance: attendance.results || [], feeSettings: feeSettings.results || [], sessionSettings: sessionSettings || { currentSession: "2026-27", nextSession: "2027-28" } };
 }
 
 export async function onRequest({ request, env }) {
@@ -29,6 +31,24 @@ export async function onRequest({ request, env }) {
   const action = clean(body.action, 40);
 
   try {
+    if (action === "save_fee_settings") {
+      const academicSession = clean(body.academicSession, 20);
+      const className = clean(body.className, 40);
+      const monthlyFee = rupees(body.monthlyFee);
+      const quarterlyDiscountPercent = Number(body.quarterlyDiscountPercent);
+      const halfYearlyDiscountPercent = Number(body.halfYearlyDiscountPercent);
+      const yearlyDiscountPercent = Number(body.yearlyDiscountPercent);
+      if (!academicSession || !className || ![quarterlyDiscountPercent, halfYearlyDiscountPercent, yearlyDiscountPercent].every(n => Number.isFinite(n) && n >= 0 && n <= 100)) return json({ error: "सत्र, कक्षा और छूट प्रतिशत सही भरें।" }, 400);
+      await env.SCHOOL_DB.prepare("INSERT INTO fee_settings (academic_session,class_name,monthly_fee,quarterly_discount_percent,half_yearly_discount_percent,yearly_discount_percent,updated_at) VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(academic_session,class_name) DO UPDATE SET monthly_fee=excluded.monthly_fee,quarterly_discount_percent=excluded.quarterly_discount_percent,half_yearly_discount_percent=excluded.half_yearly_discount_percent,yearly_discount_percent=excluded.yearly_discount_percent,updated_at=CURRENT_TIMESTAMP")
+        .bind(academicSession,className,monthlyFee,quarterlyDiscountPercent,halfYearlyDiscountPercent,yearlyDiscountPercent).run();
+      return json({ ok: true });
+    }
+    if (action === "save_fee_sessions") {
+      const currentSession = clean(body.currentSession,20), nextSession = clean(body.nextSession,20);
+      if (!currentSession || !nextSession || currentSession === nextSession) return json({ error: "वर्तमान और अगला सत्र अलग-अलग भरें।" },400);
+      await env.SCHOOL_DB.prepare("INSERT INTO fee_session_settings (id,current_session,next_session,updated_at) VALUES (1,?,?,CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET current_session=excluded.current_session,next_session=excluded.next_session,updated_at=CURRENT_TIMESTAMP").bind(currentSession,nextSession).run();
+      return json({ok:true});
+    }
     if (action === "save_student") {
       const admissionNo = clean(body.admissionNo, 40);
       const studentName = clean(body.studentName, 120);

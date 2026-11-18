@@ -1,3 +1,4 @@
+// School Office session endpoint; environment-specific secrets are checked at runtime.
 import { createSession, isAuthenticated, json, originIsSame, safePasswordMatch, sessionCookie, COOKIE_NAME } from "../_lib/auth.js";
 
 export async function onRequest({ request, env }) {
@@ -17,7 +18,7 @@ export async function onRequest({ request, env }) {
   if (!env.SESSION_SECRET) missingSecrets.push("SESSION_SECRET");
   if (missingSecrets.length) {
     return json({
-      error: "Cloudflare Production environment में ये Secret उपलब्ध नहीं हैं: " + missingSecrets.join(", ") + ". Settings → Variables and secrets में इन्हें Production के लिए सेट करके नया deployment करें।"
+      error: "इस deployment environment में ये Secret उपलब्ध नहीं हैं: " + missingSecrets.join(", ") + ". Cloudflare Pages → Settings → Variables and secrets में इसी environment (Preview या Production) के लिए इन्हें सेट करके नया deployment करें।"
     }, 503);
   }
 
