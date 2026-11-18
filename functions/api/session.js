@@ -1,3 +1,4 @@
+// School Office session endpoint; environment-specific secrets are checked at runtime.
 import { createSession, isAuthenticated, json, originIsSame, safePasswordMatch, sessionCookie, COOKIE_NAME } from "../_lib/auth.js";
 
 export async function onRequest({ request, env }) {
