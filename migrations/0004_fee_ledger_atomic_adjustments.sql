@@ -78,3 +78,39 @@ BEGIN
       updated_at=CURRENT_TIMESTAMP
   WHERE id=NEW.target_assessment_id;
 END;
+
+-- Financial events are append-only. Corrections must be represented by new approved entries.
+CREATE TRIGGER IF NOT EXISTS fee_transactions_no_update
+BEFORE UPDATE ON fee_transactions BEGIN
+  SELECT RAISE(ABORT, 'fee_transactions_are_immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS fee_transactions_no_delete
+BEFORE DELETE ON fee_transactions BEGIN
+  SELECT RAISE(ABORT, 'fee_transactions_are_immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS fee_adjustments_no_update
+BEFORE UPDATE ON fee_adjustments BEGIN
+  SELECT RAISE(ABORT, 'fee_adjustments_are_immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS fee_adjustments_no_delete
+BEFORE DELETE ON fee_adjustments BEGIN
+  SELECT RAISE(ABORT, 'fee_adjustments_are_immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS fee_assessments_no_delete
+BEFORE DELETE ON fee_assessments BEGIN
+  SELECT RAISE(ABORT, 'fee_assessments_are_immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS fee_assessments_financial_snapshot_locked
+BEFORE UPDATE OF profile_id, school_key, academic_session, fee_period, period_start, period_end, base_amount, discount_amount, net_amount
+ON fee_assessments
+WHEN EXISTS (SELECT 1 FROM fee_transactions t WHERE t.assessment_id=OLD.id)
+  OR EXISTS (SELECT 1 FROM fee_adjustments a WHERE a.source_assessment_id=OLD.id OR a.target_assessment_id=OLD.id)
+BEGIN
+  SELECT RAISE(ABORT, 'fee_assessment_snapshot_locked');
+END;
+CREATE TRIGGER IF NOT EXISTS fee_enrollment_no_delete_with_history
+BEFORE DELETE ON student_session_enrollments
+WHEN EXISTS (SELECT 1 FROM fee_assessments a WHERE a.profile_id=OLD.profile_id AND a.academic_session=OLD.academic_session)
+BEGIN
+  SELECT RAISE(ABORT, 'enrollment_has_financial_history');
+END;
