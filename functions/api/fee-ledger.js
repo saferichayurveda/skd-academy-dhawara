@@ -109,6 +109,71 @@ export async function onRequest({ request, env }) {
       return json({ ok: true, updated: true });
     }
 
+    if (action === "create_assessment") {
+      const profileId = clean(body.profileId, 100);
+      const schoolKey = clean(body.schoolKey, 30);
+      const feePeriod = clean(body.feePeriod, 40);
+      const periodStart = clean(body.periodStart, 10);
+      const periodEnd = clean(body.periodEnd, 10);
+      const months = Number(body.months);
+      if (!profileId || !schoolKey || !feePeriod || !/^\\d{4}-\\d{2}-\\d{2}$/.test(periodStart) || !/^\\d{4}-\\d{2}-\\d{2}$/.test(periodEnd) || ![1,3,6,12].includes(months)) return json({ error: "विद्यार्थी, फीस अवधि, तारीख और माहों की संख्या सही भरें।" }, 400);
+      const enrollment = await env.SCHOOL_DB.prepare(`
+        SELECT e.*, p.student_name FROM student_session_enrollments e
+        JOIN student_profiles p ON p.profile_id=e.profile_id
+        WHERE e.profile_id=? AND e.school_key=? AND e.academic_session=? AND e.enrollment_status='active'
+      `).bind(profileId, schoolKey, academicSession).first();
+      if (!enrollment) return json({ error: "इस सत्र में सक्रिय विद्यार्थी नामांकन नहीं मिला।" }, 404);
+      const existing = await env.SCHOOL_DB.prepare("SELECT id FROM fee_assessments WHERE profile_id=? AND academic_session=? AND fee_period=?").bind(profileId, academicSession, feePeriod).first();
+      if (existing) return json({ error: "इस अवधि की फीस पहले से निर्धारित है। दोबारा बनाने से बचाया गया।" }, 409);
+      const settings = await env.SCHOOL_DB.prepare("SELECT quarterly_discount_percent, half_yearly_discount_percent, yearly_discount_percent FROM fee_settings WHERE academic_session=? AND class_name=?").bind(academicSession, enrollment.class_name).first();
+      const discountPercent = months === 3 ? Number(settings?.quarterly_discount_percent || 0) : months === 6 ? Number(settings?.half_yearly_discount_percent ?? 10) : months === 12 ? Number(settings?.yearly_discount_percent ?? 15) : 0;
+      const baseAmount = Number(enrollment.monthly_fee) * months;
+      const periodDiscount = Math.round(baseAmount * discountPercent / 100);
+      const concession = enrollment.concession_type === "percent" ? Math.round(baseAmount * Number(enrollment.concession_value) / 100) : enrollment.concession_type === "fixed" ? Math.min(baseAmount, amount(enrollment.concession_value)) : 0;
+      const discountAmount = Math.min(baseAmount, periodDiscount + concession);
+      const netAmount = Math.max(0, baseAmount - discountAmount);
+      await env.SCHOOL_DB.prepare(`
+        INSERT INTO fee_assessments(profile_id,school_key,academic_session,fee_period,period_start,period_end,base_amount,discount_amount,net_amount,paid_amount,status)
+        VALUES(?,?,?,?,?,?,?,?,?,0,?)
+      `).bind(profileId, schoolKey, academicSession, feePeriod, periodStart, periodEnd, baseAmount, discountAmount, netAmount, netAmount===0?"waived":"due").run();
+      return json({ ok: true, baseAmount, discountAmount, netAmount, discountPercent }, 201);
+    }
+
+    if (action === "collect_fee") {
+      const profileId = clean(body.profileId, 100);
+      const schoolKey = clean(body.schoolKey, 30);
+      const feePeriod = clean(body.feePeriod, 40);
+      const paidAmount = amount(body.paidAmount);
+      const paymentDate = clean(body.paymentDate, 10);
+      const paymentMode = clean(body.paymentMode, 30) || "Cash";
+      const remarks = clean(body.remarks, 300);
+      if (!profileId || !schoolKey || !feePeriod || paidAmount <= 0 || !/^\\d{4}-\\d{2}-\\d{2}$/.test(paymentDate)) return json({ error: "विद्यार्थी, अवधि, जमा राशि और भुगतान तारीख सही भरें।" }, 400);
+      const assessment = await env.SCHOOL_DB.prepare(`
+        SELECT a.*, p.student_name, p.father_name, e.class_name
+        FROM fee_assessments a
+        JOIN student_profiles p ON p.profile_id=a.profile_id
+        JOIN student_session_enrollments e ON e.profile_id=a.profile_id AND e.academic_session=a.academic_session
+        WHERE a.profile_id=? AND a.school_key=? AND a.academic_session=? AND a.fee_period=?
+      `).bind(profileId, schoolKey, academicSession, feePeriod).first();
+      if (!assessment) return json({ error: "इस अवधि की फीस पहले निर्धारित करें।" }, 404);
+      const due = Math.max(0, Number(assessment.net_amount) - Number(assessment.paid_amount));
+      if (paidAmount > due) return json({ error: "जमा राशि बकाया से अधिक है। वर्तमान बकाया ₹" + due }, 400);
+      if (due <= 0) return json({ error: "इस अवधि की फीस पहले ही पूरी जमा है।" }, 409);
+      const receiptNo = "SKD-" + academicSession.replace("-", "") + "-" + crypto.randomUUID().slice(0,8).toUpperCase();
+      const nextPaid = Number(assessment.paid_amount) + paidAmount;
+      const nextStatus = nextPaid >= Number(assessment.net_amount) ? "paid" : "partial";
+      const tx = env.SCHOOL_DB.prepare(`
+        INSERT INTO fee_transactions(receipt_no,profile_id,school_key,academic_session,amount,payment_date,payment_mode,remarks,student_name_snapshot,father_name_snapshot,class_name_snapshot)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?)
+      `).bind(receiptNo, profileId, schoolKey, academicSession, paidAmount, paymentDate, paymentMode, remarks, assessment.student_name, assessment.father_name || "", assessment.class_name);
+      const upd = env.SCHOOL_DB.prepare(`
+        UPDATE fee_assessments SET paid_amount=?, status=?, updated_at=CURRENT_TIMESTAMP
+        WHERE id=? AND paid_amount=? AND net_amount-paid_amount>=?
+      `).bind(nextPaid, nextStatus, assessment.id, assessment.paid_amount, paidAmount);
+      await env.SCHOOL_DB.batch([tx, upd]);
+      return json({ ok: true, receiptNo, paidAmount, dueAmount: due-paidAmount, status: nextStatus }, 201);
+    }
+
     return json({ error: "अज्ञात कार्य अनुरोध।" }, 400);
   } catch (error) {
     console.error("Fee ledger API error:", error);
