@@ -74,7 +74,7 @@ WHEN NEW.adjustment_type='carry_forward'
 BEGIN
   UPDATE fee_assessments
   SET paid_amount=paid_amount+NEW.amount,
-      status=CASE WHEN paid_amount+NEW.amount>=net_amount THEN 'paid' ELSE 'partial' END,
+      status=CASE WHEN paid_amount+NEW.amount-COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0)>=net_amount THEN 'paid' ELSE 'partial' END,
       updated_at=CURRENT_TIMESTAMP
   WHERE id=NEW.target_assessment_id;
 END;
@@ -113,4 +113,16 @@ BEFORE DELETE ON student_session_enrollments
 WHEN EXISTS (SELECT 1 FROM fee_assessments a WHERE a.profile_id=OLD.profile_id AND a.academic_session=OLD.academic_session)
 BEGIN
   SELECT RAISE(ABORT, 'enrollment_has_financial_history');
+END;
+
+CREATE TRIGGER IF NOT EXISTS fee_adjustment_refresh_source_status
+AFTER INSERT ON fee_adjustments
+BEGIN
+  UPDATE fee_assessments
+  SET status=CASE
+    WHEN paid_amount-COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0)<=0 THEN 'due'
+    WHEN paid_amount-COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0)<net_amount THEN 'partial'
+    ELSE 'paid' END,
+    updated_at=CURRENT_TIMESTAMP
+  WHERE id=NEW.source_assessment_id;
 END;
