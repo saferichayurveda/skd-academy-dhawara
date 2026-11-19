@@ -16,7 +16,7 @@ BEGIN
       AND a.profile_id=NEW.profile_id
       AND a.school_key=NEW.school_key
       AND a.academic_session=NEW.academic_session
-      AND a.net_amount-a.paid_amount >= NEW.amount
+      AND a.net_amount-a.paid_amount+COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=a.id),0) >= NEW.amount
   ) THEN RAISE(ABORT, 'fee_balance_changed_or_insufficient') END;
 END;
 
