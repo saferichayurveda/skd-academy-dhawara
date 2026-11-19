@@ -44,7 +44,7 @@ export async function onRequest({ request, env }) {
         SELECT profile_id AS profileId, school_key AS schoolKey, academic_session AS academicSession,
                fee_period AS feePeriod, period_start AS periodStart, period_end AS periodEnd,
                base_amount AS baseAmount, discount_amount AS discountAmount, net_amount AS netAmount,
-               paid_amount AS paidAmount, MAX(net_amount-paid_amount,0) AS dueAmount, status
+               paid_amount AS paidAmount, MAX(net_amount-paid_amount+COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0),0) AS dueAmount, status
         FROM fee_assessments
         WHERE academic_session=? AND (?='' OR school_key=?)
         ORDER BY period_start, profile_id
@@ -169,19 +169,14 @@ export async function onRequest({ request, env }) {
       const receiptNo = "SKD-" + academicSession.replace("-", "") + "-" + crypto.randomUUID().slice(0,8).toUpperCase();
       const nextPaid = Number(assessment.paid_amount) + paidAmount;
       const nextStatus = nextPaid >= Number(assessment.net_amount) ? "paid" : "partial";
-      const tx = env.SCHOOL_DB.prepare(`
-        INSERT INTO fee_transactions(receipt_no,profile_id,school_key,academic_session,amount,payment_date,payment_mode,remarks,student_name_snapshot,father_name_snapshot,class_name_snapshot)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?)
-      `).bind(receiptNo, profileId, schoolKey, academicSession, paidAmount, paymentDate, paymentMode, remarks, assessment.student_name, assessment.father_name || "", assessment.class_name);
-      const upd = env.SCHOOL_DB.prepare(`
-        UPDATE fee_assessments SET paid_amount=?, status=?, updated_at=CURRENT_TIMESTAMP
-        WHERE id=? AND paid_amount=? AND net_amount-paid_amount>=?
-      `).bind(nextPaid, nextStatus, assessment.id, assessment.paid_amount, paidAmount);
-      await env.SCHOOL_DB.batch([tx, upd]);
+      await env.SCHOOL_DB.prepare(`
+        INSERT INTO fee_transactions(receipt_no,profile_id,school_key,academic_session,assessment_id,amount,payment_date,payment_mode,remarks,student_name_snapshot,father_name_snapshot,class_name_snapshot)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+      `).bind(receiptNo, profileId, schoolKey, academicSession, assessment.id, paidAmount, paymentDate, paymentMode, remarks, assessment.student_name, assessment.father_name || "", assessment.class_name).run();
       return json({ ok: true, receiptNo, paidAmount, dueAmount: due-paidAmount, status: nextStatus }, 201);
     }
 
-    return json({ error: "अज्ञात कार्य अनुरोध।" }, 400);
+    if (action === "adjust_fee") {\n      const profileId = clean(body.profileId, 100);\n      const schoolKey = clean(body.schoolKey, 30);\n      const sourceAssessmentId = Number(body.sourceAssessmentId);\n      const adjustmentType = clean(body.adjustmentType, 20);\n      const adjustmentAmount = amount(body.adjustmentAmount);\n      const reason = clean(body.reason, 500);\n      const decisionDate = clean(body.decisionDate, 10);\n      const approvedBy = clean(body.approvedBy, 120);\n      const targetAssessmentId = body.targetAssessmentId ? Number(body.targetAssessmentId) : null;\n      if (!profileId || !schoolKey || !Number.isInteger(sourceAssessmentId) || sourceAssessmentId < 1 || !["refund", "carry_forward"].includes(adjustmentType) || adjustmentAmount < 1 || !reason || !/^\\d{4}-\\d{2}-\\d{2}$/.test(decisionDate) || !approvedBy) return json({ error: "विद्यार्थी, मूल फीस रिकॉर्ड, राशि, कारण, स्वीकृति देने वाले का नाम और तारीख आवश्यक हैं।" }, 400);\n      if (adjustmentType === "carry_forward" && (!Number.isInteger(targetAssessmentId) || targetAssessmentId < 1)) return json({ error: "अगले सत्र की लक्ष्य फीस अवधि चुनें।" }, 400);\n      if (adjustmentType === "refund" && targetAssessmentId) return json({ error: "रिफंड के लिए लक्ष्य फीस अवधि नहीं चुनी जाती।" }, 400);\n      const source = await env.SCHOOL_DB.prepare("SELECT id FROM fee_assessments WHERE id=? AND profile_id=? AND school_key=? AND academic_session=?").bind(sourceAssessmentId, profileId, schoolKey, academicSession).first();\n      if (!source) return json({ error: "मूल सत्र की फीस अवधि नहीं मिली।" }, 404);\n      await env.SCHOOL_DB.prepare("INSERT INTO fee_adjustments(profile_id,school_key,academic_session,adjustment_type,amount,reason,decision_date,approved_by,source_assessment_id,target_assessment_id) VALUES(?,?,?,?,?,?,?,?,?,?)").bind(profileId, schoolKey, academicSession, adjustmentType, adjustmentAmount, reason, decisionDate, approvedBy, sourceAssessmentId, targetAssessmentId).run();\n      return json({ ok: true, adjustmentType, adjustmentAmount, note: adjustmentType === "refund" ? "रिफंड का ऑडिट रिकॉर्ड सुरक्षित हुआ।" : "अगले सत्र की फीस में क्रेडिट जोड़ा गया।" }, 201);\n    }\n    return json({ error: "अज्ञात कार्य अनुरोध।" }, 400);
   } catch (error) {
     console.error("Fee ledger API error:", error);
     return json({ error: "Fee ledger अनुरोध पूरा नहीं हुआ। Database migration और API जाँचें।" }, 500);
