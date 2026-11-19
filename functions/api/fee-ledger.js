@@ -125,12 +125,12 @@ export async function onRequest({ request, env }) {
       if (!enrollment) return json({ error: "इस सत्र में सक्रिय विद्यार्थी नामांकन नहीं मिला।" }, 404);
       const existing = await env.SCHOOL_DB.prepare("SELECT id FROM fee_assessments WHERE profile_id=? AND academic_session=? AND fee_period=?").bind(profileId, academicSession, feePeriod).first();
       if (existing) return json({ error: "इस अवधि की फीस पहले से निर्धारित है। दोबारा बनाने से बचाया गया।" }, 409);
-      const classText = String(enrollment.class_name || "").toLowerCase().replace(/\\s+/g, " ").trim();
+      const classText = String(enrollment.class_name || "").toLowerCase().replace(/\s+/g, " ").trim();
       let feeGroup = "";
       if (classText.includes("nursery") || classText.includes("नर्सरी")) feeGroup = "Nursery";
-      else if (/(^|\\b)(lkg|ukg)(\\b|$)/i.test(classText) || /कक्षा\\s*[1-7]|class\\s*[1-7]|^[1-7]वीं?$/.test(classText)) feeGroup = "LKG से 7वीं";
-      else if (/कक्षा\\s*(8|9|10)|class\\s*(8|9|10)|^(8|9|10)वीं?$/.test(classText)) feeGroup = "8वीं से 10वीं";
-      else if (/कक्षा\\s*(11|12)|class\\s*(11|12)|^(11|12)वीं?$/.test(classText)) feeGroup = "11वीं से 12वीं";
+      else if (/(^|\b)(lkg|ukg)(\b|$)/i.test(classText) || /कक्षा\s*[1-7]|class\s*[1-7]|^[1-7]वीं?$/.test(classText)) feeGroup = "LKG से 7वीं";
+      else if (/कक्षा\s*(8|9|10)|class\s*(8|9|10)|^(8|9|10)वीं?$/.test(classText)) feeGroup = "8वीं से 10वीं";
+      else if (/कक्षा\s*(11|12)|class\s*(11|12)|^(11|12)वीं?$/.test(classText)) feeGroup = "11वीं से 12वीं";
       const settings = feeGroup ? await env.SCHOOL_DB.prepare("SELECT quarterly_discount_percent, half_yearly_discount_percent, yearly_discount_percent FROM fee_settings WHERE academic_session=? AND class_name=?").bind(academicSession, feeGroup).first() : null;
       if (!feeGroup) return json({ error: "कक्षा '" + enrollment.class_name + "' की फीस श्रेणी पहचान में नहीं आई। पहले सही कक्षा नाम/फीस श्रेणी तय करें।" }, 400);
       const discountPercent = months === 3 ? Number(settings?.quarterly_discount_percent || 0) : months === 6 ? Number(settings?.half_yearly_discount_percent ?? 10) : months === 12 ? Number(settings?.yearly_discount_percent ?? 15) : 0;
