@@ -44,7 +44,7 @@ export async function onRequest({ request, env }) {
         SELECT id AS assessmentId, profile_id AS profileId, school_key AS schoolKey, academic_session AS academicSession,
                fee_period AS feePeriod, period_start AS periodStart, period_end AS periodEnd,
                base_amount AS baseAmount, discount_amount AS discountAmount, net_amount AS netAmount,
-               paid_amount AS paidAmount, MAX(net_amount-paid_amount+COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0),0) AS dueAmount, status
+               MAX(paid_amount-COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0),0) AS paidAmount, MAX(net_amount-paid_amount+COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0),0) AS dueAmount, status
         FROM fee_assessments
         WHERE academic_session=? AND (?='' OR school_key=?)
         ORDER BY period_start, profile_id
