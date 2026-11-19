@@ -5,12 +5,19 @@ const amount = (v) => Number.isFinite(Number(v)) ? Math.max(0, Math.round(Number
 const sessionPattern = /^\d{4}-\d{2}$/;
 
 async function tableReady(db) {
-  const names = ["student_session_enrollments", "fee_assessments", "fee_transactions", "fee_adjustments"];
+  const names = ["student_session_enrollments", "fee_assessments", "fee_transactions", "fee_adjustments", "fee_settings"];
   for (const name of names) {
     const row = await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind(name).first();
     if (!row) return false;
   }
-  return true;
+  const columns = await db.prepare("PRAGMA table_info(fee_transactions)").all();
+  const namesInTable = new Set((columns.results || []).map(row => row.name));
+  if (!namesInTable.has("assessment_id")) return false;
+  const adjustmentColumns = await db.prepare("PRAGMA table_info(fee_adjustments)").all();
+  const adjustmentNames = new Set((adjustmentColumns.results || []).map(row => row.name));
+  if (!adjustmentNames.has("source_assessment_id") || !adjustmentNames.has("target_assessment_id")) return false;
+  const trigger = await db.prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND name='fee_transaction_apply'").first();
+  return Boolean(trigger);
 }
 
 export async function onRequest({ request, env }) {
