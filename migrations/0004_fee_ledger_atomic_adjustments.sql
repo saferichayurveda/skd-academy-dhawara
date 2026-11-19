@@ -26,7 +26,7 @@ AFTER INSERT ON fee_transactions
 BEGIN
   UPDATE fee_assessments
   SET paid_amount=paid_amount+NEW.amount,
-      status=CASE WHEN paid_amount+NEW.amount>=net_amount THEN 'paid' ELSE 'partial' END,
+      status=CASE WHEN paid_amount+NEW.amount-COALESCE((SELECT SUM(x.amount) FROM fee_adjustments x WHERE x.source_assessment_id=fee_assessments.id),0)>=net_amount THEN 'paid' ELSE 'partial' END,
       updated_at=CURRENT_TIMESTAMP
   WHERE id=NEW.assessment_id;
 END;
