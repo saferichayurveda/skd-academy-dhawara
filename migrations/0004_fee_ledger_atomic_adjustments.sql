@@ -126,3 +126,11 @@ BEGIN
     updated_at=CURRENT_TIMESTAMP
   WHERE id=NEW.source_assessment_id;
 END;
+
+CREATE TRIGGER IF NOT EXISTS fee_enrollment_financial_snapshot_locked
+BEFORE UPDATE OF class_name, monthly_fee, concession_type, concession_value
+ON student_session_enrollments
+WHEN EXISTS (SELECT 1 FROM fee_assessments a WHERE a.profile_id=OLD.profile_id AND a.academic_session=OLD.academic_session)
+BEGIN
+  SELECT RAISE(ABORT, 'enrollment_has_fee_assessment');
+END;
