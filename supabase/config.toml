@@ -1,0 +1,7 @@
+project_id = "REPLACE_WITH_SUPABASE_PROJECT_REF"
+
+[functions.parent-portal-admin]
+verify_jwt = false
+
+[functions.parent-portal]
+verify_jwt = false
