@@ -1,8 +1,6 @@
 name: Deploy school website to GitHub Pages
 
 on:
-  push:
-    branches: [supabase-parent-portal]
   workflow_dispatch:
 
 permissions:
