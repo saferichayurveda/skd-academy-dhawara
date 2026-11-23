@@ -1,13 +1,6 @@
 name: Deploy Supabase parent portal
 
 on:
-  push:
-    branches: [supabase-parent-portal]
-    paths:
-      - "supabase/**"
-      - "supabase-config.js"
-      - "parent-progress-supabase*.html"
-      - ".github/workflows/deploy-supabase.yml"
   workflow_dispatch:
 
 jobs:
