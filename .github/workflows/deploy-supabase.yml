@@ -1,0 +1,53 @@
+name: Deploy Supabase parent portal
+
+on:
+  push:
+    branches: [supabase-parent-portal]
+    paths:
+      - "supabase/**"
+      - "supabase-config.js"
+      - "parent-progress-supabase*.html"
+      - ".github/workflows/deploy-supabase.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Link Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - name: Apply database migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase db push --linked
+      - name: Set Edge Function secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ADMIN_PASSWORD: ${{ secrets.SUPABASE_ADMIN_PASSWORD }}
+          PORTAL_TOKEN_SECRET: ${{ secrets.PORTAL_TOKEN_SECRET }}
+          SITE_ORIGIN: ${{ secrets.SITE_ORIGIN }}
+        run: |
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            SUPABASE_URL="$SUPABASE_URL" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            PORTAL_TOKEN_SECRET="$PORTAL_TOKEN_SECRET" \
+            SITE_ORIGIN="$SITE_ORIGIN"
+      - name: Deploy Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase functions deploy parent-portal-admin --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          supabase functions deploy parent-portal --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
