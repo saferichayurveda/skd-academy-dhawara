@@ -71,5 +71,5 @@ export async function onRequest({request,env}){
    const q=await env.SCHOOL_DB.prepare("SELECT id,academic_session,report_title,published,uploaded_at,file_size FROM progress_report_files WHERE profile_id=? AND school_key=? ORDER BY uploaded_at DESC").bind(profileId,school).all();return json({reports:q.results||[]});
   }
   return json({error:"अज्ञात कार्य।"},400);
- }catch(e){console.error("Parent portal admin error",e);return json({error:"कार्य पूरा नहीं हुआ। Database जाँचें।"},500)}
+ }catch(e){console.error("Parent portal admin error",e);const detail=String(e?.message||e||"Unknown database error").replace(/[\\r\\n]+/g," ").slice(0,220);return json({error:"कार्य पूरा नहीं हुआ। Database जाँचें।",detail},500)}
 }
