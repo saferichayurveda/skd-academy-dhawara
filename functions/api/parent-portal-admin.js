@@ -20,6 +20,11 @@ async function ensurePortalTables(db){
   published INTEGER NOT NULL DEFAULT 0, uploaded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
  )`).run();
  await db.prepare("CREATE INDEX IF NOT EXISTS idx_progress_reports_profile ON progress_report_files(profile_id,published,academic_session)").run();
+ await db.prepare(`CREATE TABLE IF NOT EXISTS parent_fee_status (
+  profile_id TEXT PRIMARY KEY, school_key TEXT NOT NULL,
+  fee_status TEXT NOT NULL DEFAULT 'unpaid' CHECK(fee_status IN ('paid','unpaid')),
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+ )`).run();
 }
 export async function onRequest({request,env}){
  if(!(await isAuthenticated(request,env)))return json({error:"पहले School Office में Admin Login करें।"},401);
@@ -29,7 +34,7 @@ export async function onRequest({request,env}){
   if(request.method==="GET"){
    const school=clean(new URL(request.url).searchParams.get("school"),30);
    if(school&&!schools[school])return json({error:"विद्यालय चुनें।"},400);
-   const q=school?await env.SCHOOL_DB.prepare("SELECT profile_id,school_key,student_name,father_name,class_name FROM student_profiles WHERE school_key=? ORDER BY class_name,student_name").bind(school).all():await env.SCHOOL_DB.prepare("SELECT profile_id,school_key,student_name,father_name,class_name FROM student_profiles ORDER BY school_key,class_name,student_name").all();
+   const q=school?await env.SCHOOL_DB.prepare("SELECT s.profile_id,s.school_key,s.student_name,s.father_name,s.class_name,COALESCE(f.fee_status,'unpaid') AS fee_status FROM student_profiles s LEFT JOIN parent_fee_status f ON f.profile_id=s.profile_id AND f.school_key=s.school_key WHERE s.school_key=? ORDER BY s.class_name,s.student_name").bind(school).all():await env.SCHOOL_DB.prepare("SELECT s.profile_id,s.school_key,s.student_name,s.father_name,s.class_name,COALESCE(f.fee_status,'unpaid') AS fee_status FROM student_profiles s LEFT JOIN parent_fee_status f ON f.profile_id=s.profile_id AND f.school_key=s.school_key ORDER BY s.school_key,s.class_name,s.student_name").all();
    const c=await env.SCHOOL_DB.prepare("SELECT profile_id,login_id,active FROM parent_portal_credentials").all();const by=new Map((c.results||[]).map(x=>[x.profile_id,x]));
    return json({students:(q.results||[]).map(s=>({...s,credential:by.get(s.profile_id)||null}))});
   }
@@ -43,9 +48,11 @@ export async function onRequest({request,env}){
    const bytes=new Uint8Array(await file.arrayBuffer());
    if(String.fromCharCode(...bytes.slice(0,5))!=="%PDF-")return json({error:"केवल सही PDF फ़ाइल अपलोड करें।"},415);
    const student=await env.SCHOOL_DB.prepare("SELECT profile_id FROM student_profiles WHERE profile_id=? AND school_key=?").bind(profileId,school).first();if(!student)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
+   const fee=await env.SCHOOL_DB.prepare("SELECT fee_status FROM parent_fee_status WHERE profile_id=? AND school_key=?").bind(profileId,school).first();
+   const published=fee?.fee_status==="paid"?1:0;
    const id=crypto.randomUUID();
-   await env.SCHOOL_DB.prepare("INSERT INTO progress_report_files(id,profile_id,school_key,academic_session,report_title,pdf_blob,content_type,file_size,published) VALUES(?,?,?,?,?,?,?,?,0)").bind(id,profileId,school,session,title,bytes,"application/pdf",file.size).run();
-   return json({ok:true,id,published:false,fileSize:file.size,storage:"D1"},201);
+   await env.SCHOOL_DB.prepare("INSERT INTO progress_report_files(id,profile_id,school_key,academic_session,report_title,pdf_blob,content_type,file_size,published) VALUES(?,?,?,?,?,?,?,?,?)").bind(id,profileId,school,session,title,bytes,"application/pdf",file.size,published).run();
+   return json({ok:true,id,published:!!published,fileSize:file.size,storage:"D1"},201);
   }
   let b;try{b=await request.json()}catch{return json({error:"सही अनुरोध भेजें।"},400)}
   const action=clean(b.action,30),profileId=clean(b.profileId,100),school=clean(b.schoolKey,30);
@@ -58,8 +65,18 @@ export async function onRequest({request,env}){
    await env.SCHOOL_DB.prepare(`INSERT INTO parent_portal_credentials(profile_id,school_key,login_id,pin_salt,pin_hash,active,failed_attempts,locked_until,updated_at) VALUES(?,?,?,?,?,1,0,NULL,CURRENT_TIMESTAMP) ON CONFLICT(profile_id) DO UPDATE SET school_key=excluded.school_key,pin_salt=excluded.pin_salt,pin_hash=excluded.pin_hash,active=1,failed_attempts=0,locked_until=NULL,updated_at=CURRENT_TIMESTAMP`).bind(profileId,school,loginId,hex(salt),hash).run();
    return json({ok:true,loginId,pin,student:st});
   }
+  if(action==="fee_status"){
+   if(!profileId||!schools[school]||!["paid","unpaid"].includes(b.feeStatus))return json({error:"सही फीस स्थिति चुनें।"},400);
+   const student=await env.SCHOOL_DB.prepare("SELECT profile_id FROM student_profiles WHERE profile_id=? AND school_key=?").bind(profileId,school).first();
+   if(!student)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
+   const status=b.feeStatus;
+   await env.SCHOOL_DB.prepare("INSERT INTO parent_fee_status(profile_id,school_key,fee_status,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(profile_id) DO UPDATE SET school_key=excluded.school_key,fee_status=excluded.fee_status,updated_at=CURRENT_TIMESTAMP").bind(profileId,school,status).run();
+   await env.SCHOOL_DB.prepare("UPDATE progress_report_files SET published=? WHERE profile_id=? AND school_key=?").bind(status==="paid"?1:0,profileId,school).run();
+   return json({ok:true,feeStatus:status,published:status==="paid"});
+  }
   if(action==="publish"||action==="unpublish"){
    const id=clean(b.reportId,80),published=action==="publish"?1:0;
+   if(published){const fee=await env.SCHOOL_DB.prepare("SELECT fee_status FROM parent_fee_status WHERE profile_id=? AND school_key=?").bind(profileId,school).first();if(fee?.fee_status!=="paid")return json({error:"फीस जमा होने के बाद ही रिपोर्ट प्रकाशित होगी।"},403)}
    const r=await env.SCHOOL_DB.prepare("UPDATE progress_report_files SET published=? WHERE id=? AND profile_id=? AND school_key=?").bind(published,id,profileId,school).run();
    if(!r.meta?.changes)return json({error:"रिपोर्ट रिकॉर्ड नहीं मिला।"},404);return json({ok:true,published:!!published});
   }
