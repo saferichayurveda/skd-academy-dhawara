@@ -1,7 +1,7 @@
 import {json,originIsSame} from "../_lib/auth.js";
 import {createParentSession,parentCookie} from "../_lib/parent-auth.js";
 const clean=v=>String(v||"").trim().toUpperCase().slice(0,40);
-async function hashPin(pin,salt){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:210000,hash:"SHA-256"},key,256);return Array.from(new Uint8Array(bits),b=>b.toString(16).padStart(2,"0")).join("")}
+async function hashPin(pin,salt){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:100000,hash:"SHA-256"},key,256);return Array.from(new Uint8Array(bits),b=>b.toString(16).padStart(2,"0")).join("")}
 export async function onRequest({request,env}){
  if(request.method!=="POST")return json({error:"Method not allowed"},405,{Allow:"POST"});
  if(!originIsSame(request))return json({error:"अनुरोध अस्वीकार किया गया।"},403);
