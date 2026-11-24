@@ -2,7 +2,7 @@ import {isAuthenticated,json,originIsSame} from "../_lib/auth.js";
 const clean=(v,n=180)=>String(v??"").trim().slice(0,n);
 const schools={"primary":"S. K. D. Prathmik Vidyalaya","l-madhyamik":"S. K. D. L. Madhyamik Vidyalaya","u-madhyamik":"S. K. D. U. Madhyamik Vidyalaya"};
 const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");
-async function pinHash(pin,salt){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:210000,hash:"SHA-256"},k,256);return hex(new Uint8Array(bits))}
+async function pinHash(pin,salt){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:100000,hash:"SHA-256"},k,256);return hex(new Uint8Array(bits))}
 function makePin(){const a=new Uint32Array(1);crypto.getRandomValues(a);return String(a[0]%100000000).padStart(8,"0")}
 const MAX_PDF_BYTES=1500000;
 async function ensurePortalTables(db){
