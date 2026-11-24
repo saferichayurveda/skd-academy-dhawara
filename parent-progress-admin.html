@@ -5,7 +5,7 @@ body{font:15px Arial,sans-serif;background:#f3f6fb;color:#17243a;margin:0}.wrap{
 <div class="card"><h2>Progress Report PDF Upload</h2><form id="upload"><label>Academic Session</label><input name="academicSession" value="2026-27" required><label>Report Title</label><input name="reportTitle" value="Progress Report" required><label>PDF फ़ाइल (अधिकतम 1.5 MB; D1 में सुरक्षित)</label><input name="file" type="file" accept="application/pdf,.pdf" required><p><button>PDF Upload करें</button></p></form><p>Upload के बाद रिपोर्ट अपने आप प्रकाशित नहीं होगी। पहले रिपोर्ट सूची में जाँचें, फिर Publish करें।</p><div id="reports"></div></div></section></main>
 <script>
 const $=s=>document.querySelector(s);let students=[];
-async function api(url,opts={}){const r=await fetch(url,{credentials:"same-origin",...opts});let b={};try{b=await r.json()}catch{}if(!r.ok)throw Error(b.error||"त्रुटि "+r.status);return b}
+async function api(url,opts={}){const r=await fetch(url,{credentials:"same-origin",...opts});let b={};try{b=await r.json()}catch{}if(!r.ok)throw Error([b.error||"त्रुटि "+r.status,b.detail||""].filter(Boolean).join(" — "));return b}
 function msg(s){$("#status").textContent=s}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function selected(){return students.find(x=>x.profile_id===$("#student").value)}
