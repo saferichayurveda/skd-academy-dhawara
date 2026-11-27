@@ -5,8 +5,9 @@ const clean = (value, max = 160) => String(value ?? "").trim().slice(0, max);
 const rupees = (value) => Number.isFinite(Number(value)) ? Math.max(0, Math.round(Number(value))) : 0;
 
 async function loadData(db) {
+  await db.prepare("CREATE TABLE IF NOT EXISTS school_fee_status (admission_no TEXT PRIMARY KEY, fee_status TEXT NOT NULL DEFAULT 'unpaid' CHECK(fee_status IN ('paid','unpaid')), updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)").run();
   const [students, payments, attendance] = await Promise.all([
-    db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.amount),0) AS paidFee FROM students s LEFT JOIN payments p ON p.student_id=s.id GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
+    db.prepare("SELECT s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, COALESCE(SUM(p.amount),0) AS paidFee, COALESCE(fs.fee_status,'unpaid') AS feeStatus FROM students s LEFT JOIN payments p ON p.student_id=s.id LEFT JOIN school_fee_status fs ON fs.admission_no=s.admission_no GROUP BY s.admission_no ORDER BY s.admission_no LIMIT 1000").all(),
     db.prepare("SELECT p.id, p.receipt_no AS receiptNo, s.admission_no AS admissionNo, s.student_name AS studentName, s.father_name AS fatherName, s.mobile_number AS mobileNumber, s.class_name AS className, s.total_fee AS totalFee, p.amount AS paidFee, SUM(p.amount) OVER (PARTITION BY p.student_id ORDER BY p.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulativePaidFee, p.payment_date AS paymentDate, p.payment_mode AS paymentMode, p.remarks FROM payments p JOIN students s ON s.id=p.student_id ORDER BY p.id DESC LIMIT 1000").all(),
     db.prepare("SELECT id, staff_name AS staffName, attendance_date AS attendanceDate, status FROM staff_attendance ORDER BY attendance_date DESC, staff_name LIMIT 2000").all()
   ]);
@@ -29,6 +30,16 @@ export async function onRequest({ request, env }) {
   const action = clean(body.action, 40);
 
   try {
+    if (action === "save_fee_status") {
+      const admissionNo = clean(body.admissionNo, 40);
+      const feeStatus = clean(body.feeStatus, 10);
+      if (!admissionNo || !["paid", "unpaid"].includes(feeStatus)) return json({ error: "विद्यार्थी और सही फीस स्थिति चुनें।" }, 400);
+      const student = await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=?").bind(admissionNo).first();
+      if (!student) return json({ error: "विद्यार्थी रिकॉर्ड नहीं मिला।" }, 404);
+      await env.SCHOOL_DB.prepare("INSERT INTO school_fee_status (admission_no, fee_status, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(admission_no) DO UPDATE SET fee_status=excluded.fee_status, updated_at=CURRENT_TIMESTAMP").bind(admissionNo, feeStatus).run();
+      return json({ ok: true, feeStatus }, 200);
+    }
+
     if (action === "save_student") {
       const admissionNo = clean(body.admissionNo, 40);
       const studentName = clean(body.studentName, 120);
