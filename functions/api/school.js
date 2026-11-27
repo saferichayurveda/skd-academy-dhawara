@@ -70,6 +70,7 @@ export async function onRequest({ request, env }) {
       }
       const seen = new Set();
       const rows = [];
+      const feeStatuses = [];
       for (let i = 0; i < body.students.length; i++) {
         const item = body.students[i] || {};
         const admissionNo = clean(item.admissionNo, 40);
@@ -78,16 +79,20 @@ export async function onRequest({ request, env }) {
         const mobileNumber = clean(item.mobileNumber, 10);
         const className = clean(item.className, 40);
         const totalFee = rupees(item.totalFee);
+        const feeStatus = clean(item.feeStatus, 10).toLowerCase();
+        if (feeStatus && !["paid", "unpaid"].includes(feeStatus)) return json({ error: "CSV पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Fee Status paid या unpaid होना चाहिए।" }, 400);
         if (!admissionNo || !studentName || !className || !/^[0-9]{10}$/.test(mobileNumber)) {
           return json({ error: "CSV की पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Admission No., विद्यार्थी का नाम, Class या 10 अंकों का मोबाइल नंबर सही नहीं है। कोई रिकॉर्ड सेव नहीं किया गया।" }, 400);
         }
         if (seen.has(admissionNo)) return json({ error: "CSV में Admission No. " + admissionNo + " दो बार है। डुप्लीकेट हटाकर फिर अपलोड करें।" }, 400);
         seen.add(admissionNo);
+        if (feeStatus) feeStatuses.push({ admissionNo, feeStatus });
         rows.push(env.SCHOOL_DB.prepare("INSERT INTO students (admission_no, student_name, father_name, mobile_number, class_name, total_fee) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name, father_name=excluded.father_name, mobile_number=excluded.mobile_number, class_name=excluded.class_name, total_fee=excluded.total_fee")
           .bind(admissionNo, studentName, fatherName, mobileNumber, className, totalFee));
       }
       await env.SCHOOL_DB.batch(rows);
-      return json({ ok: true, imported: rows.length }, 201);
+      if (feeStatuses.length) await env.SCHOOL_DB.batch(feeStatuses.map(x => env.SCHOOL_DB.prepare("INSERT INTO school_fee_status (admission_no, fee_status, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(admission_no) DO UPDATE SET fee_status=excluded.fee_status, updated_at=CURRENT_TIMESTAMP").bind(x.admissionNo, x.feeStatus)));
+      return json({ ok: true, imported: rows.length, feeStatusesUpdated: feeStatuses.length }, 201);
     }
 
     if (action === "add_payment") {
