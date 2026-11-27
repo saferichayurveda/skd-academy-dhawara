@@ -27,18 +27,25 @@ export async function onRequest({request,env}){
   const body=await request.json(), action=clean(body.action,30);
   if(action==="import"){
    if(!Array.isArray(body.students)||body.students.length<1||body.students.length>200)return json({error:"एक बार में 1 से 200 विद्यार्थी आयात करें।"},400);
-   const seen=new Set(),stmts=[];
+   const seen=new Set(),seenAdmissions=new Set(),stmts=[],officeStmts=[];
    for(let i=0;i<body.students.length;i++){
     const s=body.students[i]||{},school=clean(s.schoolKey,30),id=clean(s.profileId,100),name=clean(s.studentName,120),cls=clean(s.className,30);
     if(!schools[school]||!id||!name||!cls)return json({error:"पंक्ति "+(i+1)+" में विद्यालय, विद्यार्थी नाम या कक्षा अधूरी है। कोई रिकॉर्ड सेव नहीं हुआ।"},400);
     const key=school+"|"+id;if(seen.has(key))return json({error:"डुप्लीकेट प्रोफ़ाइल ID: "+id},400);seen.add(key);
+    const rawAdmission=clean(s.admissionNo,40);
+    const admissionNo=rawAdmission||("TEMP-"+id.replace(/[^A-Za-z0-9-]/g,"").slice(0,32));
+    if(seenAdmissions.has(admissionNo))return json({error:"CSV में Admission No. "+admissionNo+" दो बार है।"},400);seenAdmissions.add(admissionNo);
     const marks=JSON.stringify(s.marks||{});if(marks.length>12000)return json({error:"विद्यार्थी "+name+" के अंकों का डेटा बहुत बड़ा है।"},413);
     stmts.push(env.SCHOOL_DB.prepare(`INSERT INTO student_profiles(profile_id,school_key,admission_no,student_name,father_name,mother_name,dob,class_name,pen,mobile_number,total_fee,marks_json,source_row,updated_at)
      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
      ON CONFLICT(profile_id) DO UPDATE SET school_key=excluded.school_key,admission_no=excluded.admission_no,student_name=excluded.student_name,father_name=excluded.father_name,mother_name=excluded.mother_name,dob=excluded.dob,class_name=excluded.class_name,pen=excluded.pen,mobile_number=excluded.mobile_number,total_fee=excluded.total_fee,marks_json=excluded.marks_json,source_row=excluded.source_row,updated_at=CURRENT_TIMESTAMP`)
-     .bind(id,school,clean(s.admissionNo,40),name,clean(s.fatherName,120),clean(s.motherName,120),clean(s.dob,30),cls,clean(s.pen,50),clean(s.mobileNumber,10),Math.max(0,Number(s.totalFee)||0),marks,Number(s.sourceRow)||null));
+     .bind(id,school,admissionNo,name,clean(s.fatherName,120),clean(s.motherName,120),clean(s.dob,30),cls,clean(s.pen,50),clean(s.mobileNumber,10),Math.max(0,Number(s.totalFee)||0),marks,Number(s.sourceRow)||null));
+    const mobile=clean(s.mobileNumber,10);
+    officeStmts.push(env.SCHOOL_DB.prepare("INSERT INTO students (admission_no, student_name, father_name, mobile_number, class_name, total_fee) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name, father_name=excluded.father_name, mobile_number=excluded.mobile_number, class_name=excluded.class_name, total_fee=excluded.total_fee").bind(admissionNo,name,clean(s.fatherName,120),/^[0-9]{10}$/.test(mobile)?mobile:"",cls,Math.max(0,Number(s.totalFee)||0)));
    }
-   await env.SCHOOL_DB.batch(stmts);return json({ok:true,imported:stmts.length});
+   await env.SCHOOL_DB.batch(stmts);
+   await env.SCHOOL_DB.batch(officeStmts);
+   return json({ok:true,imported:stmts.length,schoolOfficeImported:officeStmts.length});
   }
   if(action==="edit"){
    const id=clean(body.profileId,100),school=clean(body.schoolKey,30),s=body.student||{};
