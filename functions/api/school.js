@@ -30,6 +30,24 @@ export async function onRequest({ request, env }) {
   const action = clean(body.action, 40);
 
   try {
+    if (action === "update_admission_no") {
+      const oldAdmissionNo = clean(body.oldAdmissionNo, 40);
+      const newAdmissionNo = clean(body.newAdmissionNo, 40);
+      if (!oldAdmissionNo || !newAdmissionNo) return json({ error: "पुराना और नया Admission No. दोनों भरें।" }, 400);
+      if (oldAdmissionNo === newAdmissionNo) return json({ ok: true, unchanged: true }, 200);
+      const student = await env.SCHOOL_DB.prepare("SELECT id FROM students WHERE admission_no=?").bind(oldAdmissionNo).first();
+      if (!student) return json({ error: "पुराना Admission No. रिकॉर्ड में नहीं मिला।" }, 404);
+      const duplicate = await env.SCHOOL_DB.prepare("SELECT id FROM students WHERE admission_no=?").bind(newAdmissionNo).first();
+      if (duplicate) return json({ error: "यह नया Admission No. किसी दूसरे विद्यार्थी को पहले से दिया गया है।" }, 409);
+      const fee = await env.SCHOOL_DB.prepare("SELECT fee_status FROM school_fee_status WHERE admission_no=?").bind(oldAdmissionNo).first();
+      await env.SCHOOL_DB.prepare("UPDATE students SET admission_no=? WHERE id=?").bind(newAdmissionNo, student.id).run();
+      if (fee) {
+        await env.SCHOOL_DB.prepare("INSERT INTO school_fee_status (admission_no, fee_status, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(admission_no) DO UPDATE SET fee_status=excluded.fee_status, updated_at=CURRENT_TIMESTAMP").bind(newAdmissionNo, fee.fee_status).run();
+        await env.SCHOOL_DB.prepare("DELETE FROM school_fee_status WHERE admission_no=?").bind(oldAdmissionNo).run();
+      }
+      return json({ ok: true, admissionNo: newAdmissionNo }, 200);
+    }
+
     if (action === "save_fee_status") {
       const admissionNo = clean(body.admissionNo, 40);
       const feeStatus = clean(body.feeStatus, 10);
