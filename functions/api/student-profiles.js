@@ -3,6 +3,7 @@ import { isAuthenticated, json, originIsSame } from "../_lib/auth.js";
 const clean=(v,n=300)=>String(v??"").trim().slice(0,n);
 const schools={"primary":"S. K. D. Prathmik Vidyalaya","l-madhyamik":"S. K. D. L. Madhyamik Vidyalaya","u-madhyamik":"S. K. D. U. Madhyamik Vidyalaya"};
 async function ensure(db){
+ await db.prepare(`CREATE TABLE IF NOT EXISTS parent_fee_status (profile_id TEXT PRIMARY KEY, school_key TEXT NOT NULL, fee_status TEXT NOT NULL DEFAULT 'unpaid' CHECK(fee_status IN ('paid','unpaid')), updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
  await db.prepare(`CREATE TABLE IF NOT EXISTS student_profiles (
  profile_id TEXT PRIMARY KEY, school_key TEXT NOT NULL, admission_no TEXT NOT NULL DEFAULT '',
  student_name TEXT NOT NULL, father_name TEXT NOT NULL DEFAULT '', mother_name TEXT NOT NULL DEFAULT '',
@@ -19,7 +20,7 @@ export async function onRequest({request,env}){
   if(request.method==="GET"){
    const u=new URL(request.url),school=clean(u.searchParams.get("school"),30);
    if(school&&!schools[school])return json({error:"सही विद्यालय चुनें।"},400);
-   const q=school?await env.SCHOOL_DB.prepare("SELECT * FROM student_profiles WHERE school_key=? ORDER BY class_name,student_name").bind(school).all():await env.SCHOOL_DB.prepare("SELECT * FROM student_profiles ORDER BY school_key,class_name,student_name").all();
+   const q=school?await env.SCHOOL_DB.prepare("SELECT s.*,COALESCE(f.fee_status,'unpaid') AS fee_status FROM student_profiles s LEFT JOIN parent_fee_status f ON f.profile_id=s.profile_id AND f.school_key=s.school_key WHERE s.school_key=? ORDER BY s.class_name,s.student_name").bind(school).all():await env.SCHOOL_DB.prepare("SELECT s.*,COALESCE(f.fee_status,'unpaid') AS fee_status FROM student_profiles s LEFT JOIN parent_fee_status f ON f.profile_id=s.profile_id AND f.school_key=s.school_key ORDER BY s.school_key,s.class_name,s.student_name").all();
    return json({students:(q.results||[]).map(r=>({...r,marks:JSON.parse(r.marks_json||"{}")}))});
   }
   if(request.method!=="POST")return json({error:"Method not allowed"},405,{Allow:"GET,POST"});
