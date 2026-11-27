@@ -70,6 +70,7 @@ export async function onRequest({ request, env }) {
       }
       const seen = new Set();
       const rows = [];
+      const feeStatuses = [];
       for (let i = 0; i < body.students.length; i++) {
         const item = body.students[i] || {};
         const admissionNo = clean(item.admissionNo, 40);
@@ -78,6 +79,9 @@ export async function onRequest({ request, env }) {
         const mobileNumber = clean(item.mobileNumber, 10);
         const className = clean(item.className, 40);
         const totalFee = rupees(item.totalFee);
+        const feeStatus = clean(item.feeStatus, 10).toLowerCase();
+        if (feeStatus && !["paid", "unpaid"].includes(feeStatus)) return json({ error: "CSV पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Fee Status paid या unpaid होना चाहिए।" }, 400);
+        if (feeStatus) feeStatuses.push({ admissionNo, feeStatus });
         if (!admissionNo || !studentName || !className || !/^[0-9]{10}$/.test(mobileNumber)) {
           return json({ error: "CSV की पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Admission No., विद्यार्थी का नाम, Class या 10 अंकों का मोबाइल नंबर सही नहीं है। कोई रिकॉर्ड सेव नहीं किया गया।" }, 400);
         }
@@ -87,7 +91,8 @@ export async function onRequest({ request, env }) {
           .bind(admissionNo, studentName, fatherName, mobileNumber, className, totalFee));
       }
       await env.SCHOOL_DB.batch(rows);
-      return json({ ok: true, imported: rows.length }, 201);
+      if (feeStatuses.length) await env.SCHOOL_DB.batch(feeStatuses.map(x => env.SCHOOL_DB.prepare("INSERT INTO school_fee_status (admission_no, fee_status, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(admission_no) DO UPDATE SET fee_status=excluded.fee_status, updated_at=CURRENT_TIMESTAMP").bind(x.admissionNo, x.feeStatus)));
+      return json({ ok: true, imported: rows.length, feeStatusesUpdated: feeStatuses.length }, 201);
     }
 
     if (action === "add_payment") {
