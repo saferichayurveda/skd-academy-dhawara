@@ -47,6 +47,14 @@ export async function onRequest({request,env}){
    await env.SCHOOL_DB.batch(officeStmts);
    return json({ok:true,imported:stmts.length,schoolOfficeImported:officeStmts.length});
   }
+  if(action==="update_mobile"){
+   const id=clean(body.profileId,100),school=clean(body.schoolKey,30),mobile=clean(body.mobileNumber,10);
+   if(!id||!schools[school]||(mobile&&!/^[0-9]{10}$/.test(mobile)))return json({error:"मोबाइल नंबर खाली छोड़ें या 10 अंक सही भरें।"},400);
+   const result=await env.SCHOOL_DB.prepare("UPDATE student_profiles SET mobile_number=?,updated_at=CURRENT_TIMESTAMP WHERE profile_id=? AND school_key=?").bind(mobile,id,school).run();
+   if(!(result.meta?.changes))return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
+   await env.SCHOOL_DB.prepare("UPDATE students SET mobile_number=? WHERE admission_no=(SELECT admission_no FROM student_profiles WHERE profile_id=? AND school_key=?)").bind(mobile,id,school).run();
+   return json({ok:true,saved:true});
+  }
   if(action==="edit"){
    const id=clean(body.profileId,100),school=clean(body.schoolKey,30),s=body.student||{};
    if(!id||!schools[school]||!clean(s.studentName,120)||!clean(s.className,30))return json({error:"नाम और कक्षा आवश्यक हैं।"},400);
