@@ -81,12 +81,12 @@ export async function onRequest({ request, env }) {
         const totalFee = rupees(item.totalFee);
         const feeStatus = clean(item.feeStatus, 10).toLowerCase();
         if (feeStatus && !["paid", "unpaid"].includes(feeStatus)) return json({ error: "CSV पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Fee Status paid या unpaid होना चाहिए।" }, 400);
-        if (feeStatus) feeStatuses.push({ admissionNo, feeStatus });
         if (!admissionNo || !studentName || !className || !/^[0-9]{10}$/.test(mobileNumber)) {
           return json({ error: "CSV की पंक्ति " + (Number(item.rowNumber) || i + 2) + " में Admission No., विद्यार्थी का नाम, Class या 10 अंकों का मोबाइल नंबर सही नहीं है। कोई रिकॉर्ड सेव नहीं किया गया।" }, 400);
         }
         if (seen.has(admissionNo)) return json({ error: "CSV में Admission No. " + admissionNo + " दो बार है। डुप्लीकेट हटाकर फिर अपलोड करें।" }, 400);
         seen.add(admissionNo);
+        if (feeStatus) feeStatuses.push({ admissionNo, feeStatus });
         rows.push(env.SCHOOL_DB.prepare("INSERT INTO students (admission_no, student_name, father_name, mobile_number, class_name, total_fee) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(admission_no) DO UPDATE SET student_name=excluded.student_name, father_name=excluded.father_name, mobile_number=excluded.mobile_number, class_name=excluded.class_name, total_fee=excluded.total_fee")
           .bind(admissionNo, studentName, fatherName, mobileNumber, className, totalFee));
       }
