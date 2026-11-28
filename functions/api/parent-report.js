@@ -12,9 +12,12 @@ export async function onRequest({request,env}){
   const body=r.pdf_blob instanceof ArrayBuffer?r.pdf_blob:new Uint8Array(r.pdf_blob);
   return new Response(body,{headers:{"Content-Type":r.content_type||"application/pdf","Content-Length":String(r.file_size||body.byteLength),"Content-Disposition":"inline; filename=\"progress-report.pdf\"","Cache-Control":"private, no-store, max-age=0","Pragma":"no-cache","X-Content-Type-Options":"nosniff"}});
  }
- const p=await env.SCHOOL_DB.prepare("SELECT student_name,class_name,school_key FROM student_profiles WHERE profile_id=? AND school_key=?").bind(s.profileId,s.schoolKey).first();if(!p)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
+ const p=await env.SCHOOL_DB.prepare("SELECT student_name,class_name,school_key,admission_no FROM student_profiles WHERE profile_id=? AND school_key=?").bind(s.profileId,s.schoolKey).first();if(!p)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
  const fee=await env.SCHOOL_DB.prepare("SELECT fee_status FROM parent_fee_status WHERE profile_id=? AND school_key=?").bind(s.profileId,s.schoolKey).first();
  const feeStatus=fee?.fee_status==="paid"?"paid":"unpaid";
+ const cardKey="PROFILE:"+s.profileId;
+ const card=await env.SCHOOL_DB.prepare("SELECT session,payload_json,updated_at FROM progress_cards WHERE school_key=? AND admission_no IN (?,?) ORDER BY updated_at DESC LIMIT 1").bind(s.schoolKey,cardKey,p.admission_no).first();
  const q=feeStatus==="paid"?await env.SCHOOL_DB.prepare("SELECT id,academic_session,report_title,uploaded_at FROM progress_report_files WHERE profile_id=? AND school_key=? AND published=1 ORDER BY uploaded_at DESC").bind(s.profileId,s.schoolKey).all():{results:[]};
- return json({student:{name:p.student_name,className:p.class_name},feeStatus,reports:q.results||[]});
+ let reportCard=null;try{if(card)reportCard={session:card.session,updatedAt:card.updated_at,payload:JSON.parse(card.payload_json||"{}")}}catch{}
+ return json({student:{name:p.student_name,className:p.class_name},feeStatus,reportCard,reports:q.results||[]});
 }
