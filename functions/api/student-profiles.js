@@ -48,6 +48,23 @@ export async function onRequest({request,env}){
    await env.SCHOOL_DB.batch(officeStmts);
    return json({ok:true,imported:stmts.length,schoolOfficeImported:officeStmts.length});
   }
+  if(action==="update_admission_no"){
+   const id=clean(body.profileId,100),school=clean(body.schoolKey,30),newNo=clean(body.admissionNo,40);
+   if(!id||!schools[school]||!newNo)return json({error:"सही Admission Number भरें।"},400);
+   const current=await env.SCHOOL_DB.prepare("SELECT admission_no FROM student_profiles WHERE profile_id=? AND school_key=?").bind(id,school).first();
+   if(!current)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
+   const oldNo=clean(current.admission_no,40);
+   if(oldNo===newNo)return json({ok:true,saved:true,unchanged:true});
+   const duplicateProfile=await env.SCHOOL_DB.prepare("SELECT profile_id FROM student_profiles WHERE school_key=? AND admission_no=? AND profile_id<>? LIMIT 1").bind(school,newNo,id).first();
+   if(duplicateProfile)return json({error:"यह Admission Number इसी विद्यालय के दूसरे विद्यार्थी को दिया गया है।"},409);
+   const duplicateOffice=await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=? AND admission_no<>? LIMIT 1").bind(newNo,oldNo).first();
+   if(duplicateOffice)return json({error:"यह Admission Number School Office में पहले से मौजूद है।"},409);
+   const officeRow=await env.SCHOOL_DB.prepare("SELECT admission_no FROM students WHERE admission_no=?").bind(oldNo).first();
+   if(officeRow){const officeUpdate=await env.SCHOOL_DB.prepare("UPDATE students SET admission_no=? WHERE admission_no=?").bind(newNo,oldNo).run();if(!(officeUpdate.meta?.changes))return json({error:"School Office में Admission Number अपडेट नहीं हुआ।"},409)}
+   const updated=await env.SCHOOL_DB.prepare("UPDATE student_profiles SET admission_no=?,updated_at=CURRENT_TIMESTAMP WHERE profile_id=? AND school_key=?").bind(newNo,id,school).run();
+   if(!(updated.meta?.changes))return json({error:"विद्यार्थी Admission Number अपडेट नहीं हुआ।"},409);
+   return json({ok:true,saved:true,admissionNo:newNo});
+  }
   if(action==="update_mobile"){
    const id=clean(body.profileId,100),school=clean(body.schoolKey,30),mobile=clean(body.mobileNumber,10);
    if(!id||!schools[school]||(mobile&&!/^[0-9]{10}$/.test(mobile)))return json({error:"मोबाइल नंबर खाली छोड़ें या 10 अंक सही भरें।"},400);
