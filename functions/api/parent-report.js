@@ -15,6 +15,7 @@ export async function onRequest({request,env}){
  const p=await env.SCHOOL_DB.prepare("SELECT student_name,class_name,school_key,admission_no FROM student_profiles WHERE profile_id=? AND school_key=?").bind(s.profileId,s.schoolKey).first();if(!p)return json({error:"विद्यार्थी रिकॉर्ड नहीं मिला।"},404);
  const fee=await env.SCHOOL_DB.prepare("SELECT fee_status FROM parent_fee_status WHERE profile_id=? AND school_key=?").bind(s.profileId,s.schoolKey).first();
  const feeStatus=fee?.fee_status==="paid"?"paid":"unpaid";
+ await env.SCHOOL_DB.prepare(`CREATE TABLE IF NOT EXISTS progress_cards (admission_no TEXT NOT NULL,school_key TEXT NOT NULL,session TEXT NOT NULL,payload_json TEXT NOT NULL,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(admission_no,school_key,session))`).run();
  const cardKey="PROFILE:"+s.profileId;
  const card=await env.SCHOOL_DB.prepare("SELECT session,payload_json,updated_at FROM progress_cards WHERE school_key=? AND admission_no IN (?,?) ORDER BY updated_at DESC LIMIT 1").bind(s.schoolKey,cardKey,p.admission_no).first();
  const q=feeStatus==="paid"?await env.SCHOOL_DB.prepare("SELECT id,academic_session,report_title,uploaded_at FROM progress_report_files WHERE profile_id=? AND school_key=? AND published=1 ORDER BY uploaded_at DESC").bind(s.profileId,s.schoolKey).all():{results:[]};
